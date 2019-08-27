@@ -4,6 +4,10 @@
 
 > G is a garden of small JavaScript utilities.
 
+
+
+NOTE: This project is deeply inspired by the [@ariiiman/r](https://github.com/ariiiman/r) repository. I started it initially for learning purposes, but then I challenged myself to make it even more optimized.
+
 <br>
 
 ## Installation
@@ -12,16 +16,25 @@
 npm install @mystroken/g
 ```
 
+<br>
+
 ## Usage
 
-- `new S(options)`
-  Return a new instance of S. See the options below.
+Look at the sources files for more information.
 
-- `instance.on(fn)`
-  Listen to the scroll event using the specified function (fn).
+###### Import
 
-- `instance.off(fn)`
-  Remove the listener.
+```javascript
+// Import the whole library.
+import G from '@mystroken/g';
 
-- `instance.destroy()`
-  Will remove all events and unbind the DOM listeners.
+// OR import individual helper - like lodash he he ;-).
+import Raf from '@mystroken/g/Raf'; 
+```
+
+###### Create a 60FPS loop.
+
+```javascript
+const rAF = Raf(elapsed => console.log(elapsed));
+rAF.run();
+```

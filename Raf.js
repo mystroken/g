@@ -1,45 +1,38 @@
+'use strict';
+
 /**
- * RAF
+ * RequestAnimationFrame Interface.
  *
+ * @param {Function} loop The function to call in a loop.
  * @example
  *
- * const raf = new G.Raf(loop)
+ * const raf = new Raf(loop)
  * raf.run()
  * raf.stop()
  *
- * loop(elapsed) {}
+ * const loop = elapsed => console.log(elapsed)
  */
-
 function Raf(loop) {
-  this.loop = loop;
-  this.raf = null;
-  this.startTime = null;
-  this.shouldBreakLoop = false;
+  this.cb = loop;
+  this.rAF = null;
+  this.startTime = 0;
 
-  // console.log(this._loop);
   this.tick = this.tick.bind(this);
-  this.loop = this.loop.bind(this);
 }
 
 Raf.prototype.run = function() {
-  this.shouldBreakLoop = false;
-  this.startTime = 0;//performance.now();
-  this.play();
+  this.startTime = performance.now();
+  this.rAF = requestAnimationFrame(this.tick);
 };
 
 Raf.prototype.stop = function() {
-  this.shouldBreakLoop = true;
+  cancelAnimationFrame(this.rAF);
 };
 
-Raf.prototype.tick = now => {
-  // if (this.shouldBreakLoop) return;
-  console.log(this.loop);
-  this.loop(this.startTime - now);
-  this.play();
+Raf.prototype.tick = function(now) {
+  this.cb(now - this.startTime);
+  this.rAF = requestAnimationFrame(this.tick);
 };
 
-Raf.prototype.play = function() {
-  this.raf = requestAnimationFrame(this.tick);
-};
 
-export default Raf;
+module.exports = Raf;
