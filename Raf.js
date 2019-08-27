@@ -28,7 +28,6 @@ Raf.prototype.run = function() {
 };
 
 Raf.prototype.stop = function() {
-  console.log('I have been called');
   this.shouldStopTheLoop = true;
   cancelAnimationFrame(this.rAF);
 };
