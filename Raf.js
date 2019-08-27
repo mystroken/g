@@ -15,21 +15,26 @@
 function Raf(loop) {
   this.cb = loop;
   this.rAF = null;
-  this.startTime = 0;
+  this.startTime = null;
+  this.shouldStopTheLoop = false;
 
   this.tick = this.tick.bind(this);
 }
 
 Raf.prototype.run = function() {
+  this.shouldStopTheLoop = false;
   this.startTime = performance.now();
   this.rAF = requestAnimationFrame(this.tick);
 };
 
 Raf.prototype.stop = function() {
+  console.log('I have been called');
+  this.shouldStopTheLoop = true;
   cancelAnimationFrame(this.rAF);
 };
 
 Raf.prototype.tick = function(now) {
+  if (this.shouldStopTheLoop) return;
   this.cb(now - this.startTime);
   this.rAF = requestAnimationFrame(this.tick);
 };
