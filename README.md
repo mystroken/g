@@ -1,4 +1,4 @@
-# :hibiscus::leaves: G
+# G
 
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mystroken/s/issues)
 
