@@ -1,0 +1,22 @@
+{
+  "name": "@mystroken/g",
+  "version": "0.0.1",
+  "description": "A garden of small JavaScript utilities.",
+  "main": "index.js",
+  "author": "Mystro Ken <mystroken@gmail.com>",
+  "license": "MIT",
+  "scripts": {},
+  "homepage": "https://github.com/mystroken/g#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mystroken/g.git"
+  },
+  "files": [
+    "index.js"
+  ],
+  "keywords": [
+    "javascript",
+    "libray",
+    "creativecoding"
+  ]
+}
