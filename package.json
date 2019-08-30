@@ -5,7 +5,9 @@
   "main": "index.js",
   "author": "Mystro Ken <mystroken@gmail.com>",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "test": "jest"
+  },
   "homepage": "https://github.com/mystroken/g#readme",
   "repository": {
     "type": "git",
@@ -18,5 +20,8 @@
     "javascript",
     "libray",
     "creativecoding"
-  ]
+  ],
+  "devDependencies": {
+    "jest": "^24.9.0"
+  }
 }

@@ -11,7 +11,7 @@
  * BindAll(this, ['bindFunction1', 'bindFunction2']);
  *
  */
-function BindAll(c, a) {
+function bindAll(c, a) {
   var arrL = a.length;
 
   for (var i = 0; i < arrL; i++) {
@@ -19,4 +19,4 @@ function BindAll(c, a) {
   }
 }
 
-module.exports = BindAll;
+module.exports = bindAll;

@@ -9,14 +9,14 @@
  * @returns {number} Returns the clamped number.
  * @example
  *
- * Clamp(-10, -5, 5)
+ * clamp(-10, -5, 5)
  * // => -5
  *
- * Clamp(10, -5, 5)
+ * clamp(10, -5, 5)
  * // => 5
  */
-function Clamp(number, lower, upper) {
+function clamp(number, lower, upper) {
   return Math.min(Math.max(number, lower), upper);
 }
 
-module.exports = Clamp;
+module.exports = clamp;

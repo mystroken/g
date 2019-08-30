@@ -1,6 +1,6 @@
 'use strict';
 var Raf = require('./Raf');
-var Clamp = require('./Clamp');
+var clamp = require('./clamp');
 
 /**
  *
@@ -27,21 +27,24 @@ function Delay(cb, d) {
   this.rAF = new Raf(this.loop);
 }
 
-Delay.prototype.run = function() {
-  if (this.d === 0) this.cb();
-  else this.rAF.run();
-};
+Delay.prototype = {
 
-Delay.prototype.stop = function() {
-  this.rAF.stop();
-};
+  run: function() {
+    if (this.d === 0) this.cb();
+    else this.rAF.run();
+  },
 
-Delay.prototype.loop = function(e) {
-  var elapsed = Clamp(e, 0, this.d);
-  if (elapsed === this.d) {
-    this.stop();
-    this.cb();
-  }
+  stop: function() {
+    this.rAF.stop();
+  },
+
+  loop: function(e) {
+    var elapsed = clamp(e, 0, this.d);
+    if (elapsed === this.d) {
+      this.stop();
+      this.cb();
+    }
+  },
 };
 
 module.exports = Delay;
