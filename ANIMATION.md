@@ -78,8 +78,6 @@ Except the `linear` easing, all the available easings are composed as follows:
   
   - `6`: Expo
 
-
-
 NOTE: you can pass a function if you want to use your own easing function. The function takes the multiplier as its argument and returns a number.
 
 ```javascript
@@ -102,8 +100,8 @@ By passing it a callback, you can define a different duration for each element. 
 ```javascript
 // First element fades out in 1s, second element in 2s, etc.
 new Animate({
-  el: "span",
-  e: "linear",
+  el: 'span',
+  e: 'linear',
   d: index => (index + 1) * 1000,
   p: { opacity: [1, 0] }
 });
@@ -122,8 +120,8 @@ By passing it a callback, you can define a different delay for each element. The
 ```javascript
 // First element fades out after 1s, second element after 2s, etc.
 new Animate({
-  el: "span",
-  e: "linear",
+  el: 'span',
+  e: 'linear',
   delay: index => (index + 1) * 1000,
   p: { opacity: [1, 0] }
 });
@@ -143,7 +141,7 @@ The callback takes as its argument the animation progress (between 0 and 1) and 
 // Linearly outputs the percentage increase during 5s
 new Animate({
   duration: 5000,
-  easing: "linear",
+  easing: 'linear',
   update: progress =>
     document.body.textContent = `${Math.round(progress * 100)}%`
 });
@@ -162,8 +160,8 @@ Stops the animations on the [elements](#el).
 
 const duration = 5000;
 const animation = new Animate({
-  el: "span",
-  e: "io6",
+  el: 'span',
+  e: 'io6',
   d: duration,
   p: { rotate: [0, 360] }
 });
@@ -176,5 +174,3 @@ setTimeout(() => {
     animation.stop();
 }, (duration - 1000));
 ```
-
-
