@@ -4,9 +4,11 @@
 ──────────────────────────────────────────
 EASE
 ──────────────────────────────────────────
+
 ──────────────────────────────────────────
 PROPERTIES
 ──────────
+
 i           In
 o           Out
 io          InOut
@@ -16,11 +18,17 @@ io          InOut
 4           Quart
 5           Quint
 6           Expo
+
 USAGE
 ─────
 const eased = Ease['linear'](multiplier);
 */
 
+/**
+ * Ease
+ *
+ * @type {{o1: (function(*): number), linear: (function(*): *), o2: (function(*): number), o3: (function(*): number), o4: (function(*): number), o5: (function(*): number), o6: (function(*): number), i1: (function(*): number), i2: (function(*): number), io1: (function(*): number), i3: (function(*): number), i4: (function(*): number), io3: (function(*): number), i5: (function(*): number), io2: (function(*): number), i6: (function(*): number), io5: (function(*): number), io4: (function(*): number), io6: Ease.io6}}
+ */
 var Ease = {
   linear: function (t) {
     return t;
