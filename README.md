@@ -60,4 +60,4 @@ const anim = new Animate({
 anim.play();
 ```
 
-[→ See more about the topic](#ANIMATION.md)
+[→ See more about the topic](https://github.com/mystroken/g/blob/master/ANIMATION.md)

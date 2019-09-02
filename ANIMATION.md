@@ -1,6 +1,6 @@
 # G:  Animations
 
-Animate is a JavaScript animation library focusing on performance and authoring flexibility.
+Animate is a JavaScript animation library focusing on performance.
 
 ## Getting started
 
@@ -9,188 +9,172 @@ Animate is a JavaScript animation library focusing on performance and authoring 
 ```javascript
 import Animate from '@mystroken/g/animate.js';
 
-new Animate({
-  elements: 'div',
-  duration: 2000,
-  delay: index => index * 100,
-  properties: {
-      x: [0, 800, 'px'],
-      opacity: [0, 1],
-  }
+const anim = new Animate({
+    // Select the element to animate.
+    el: '#loader',
+    // Set the animation duration in ms.
+    d: 2000,
+    // Set properties to animate.
+    p: {
+        // Fade In the element, opacity from 0 to 1.
+        opacity: [0, 100],
+        // Move the element on y-axis from 100px to 0px.
+        y: [100, 0, 'px'],
+    }
 });
+
+// Then play the animation anywhere.
+anim.play();
 ```
 
 ## Options
 
-### elements
-
-| Default | Type                                   |
-|:------- |:-------------------------------------- |
-| `null`  | String \| Element \| NodeList \| Array |
+### el
 
 Determines the DOM elements to animate. You can either pass it a CSS selector or DOM elements.
 
+| Default     | Type                                   |
+|:----------- |:-------------------------------------- |
+| `undefined` | String \| Element \| NodeList \| Array |
+
 ```javascript
 new Animate({
-  elements: document.body.children,
-  properties: {
+  el: document.body.children,
+  p: {
       x: [0, 800, 'px'],
   }
 });
 ```
 
-### easing
+### e
 
-| Default       | Type   |
-|:------------- |:------ |
-| `out-elastic` | String |
+Determines the acceleration curve of your animation (the easing).
 
-Determines the acceleration curve of your animation.
+| Default  | Type               |
+|:-------- |:------------------ |
+| `linear` | String \| Function |
 
-| constant | accelerate     | decelerate      | accelerate-decelerate |
-|:-------- |:-------------- |:--------------- |:--------------------- |
-| linear   | in-cubic       | out-cubic       | in-out-cubic          |
-|          | in-quartic     | out-quartic     | in-out-quartic        |
-|          | in-quintic     | out-quintic     | in-out-quintic        |
-|          | in-exponential | out-exponential | in-out-exponential    |
-|          | in-circular    | out-circular    | in-out-circular       |
-|          | in-elastic     | out-elastic     | in-out-elastic        |
+Except the `linear` easing, all the available easings are composed as follows:
 
-The amplitude and period of elastic easings can be configured by providing space-separated values.
-Amplitude defaults to `1`, period to `0.4`.
+- Choose the acceleration type: 
+  
+  - `i`: In (accelerated) ;
+  
+  - `o`: Out (decelerated) ;
+  
+  - `io`: InOut (accelerated then decelerated).
+
+- Choose the type of the curse: 
+  
+  - `1`: Sine
+  
+  - `2`: Quad
+  
+  - `3`: Cubic
+  
+  - `4`: Quart
+  
+  - `5`: Quint
+  
+  - `6`: Expo
+
+
+
+NOTE: you can pass a function if you want to use your own easing function. The function takes the multiplier as its argument and returns a number.
 
 ```javascript
-// Increase elasticity
 new Animate({
-  elements: "span",
-  easing: "out-elastic 1.4 0.2",
+  el: 'span',
+  e: 'io2', // Quad curve - Accelerated then decelerated.
 });
 ```
 
-### duration
+### d
+
+Determines the duration of your animation in milliseconds.
 
 | Default | Type               |
 |:------- |:------------------ |
 | `1000`  | Number \| Function |
 
-Determines the duration of your animation in milliseconds. By passing it a callback, you can define
-a different duration for each element. The callback takes the index of each element as its argument
-and returns a number.
+By passing it a callback, you can define a different duration for each element. The callback takes the index of each element as its argument and returns a number.
 
 ```javascript
 // First element fades out in 1s, second element in 2s, etc.
-animate({
-  elements: "span",
-  easing: "linear",
-  duration: index => (index + 1) * 1000,
-  opacity: [1, 0]
+new Animate({
+  el: "span",
+  e: "linear",
+  d: index => (index + 1) * 1000,
+  p: { opacity: [1, 0] }
 });
 ```
 
 ### delay
+
+Determines the delay of your animation in milliseconds.
 
 | Default | Type               |
 |:------- |:------------------ |
 | `0`     | Number \| Function |
 
-Determines the delay of your animation in milliseconds. By passing it a callback, you can define
-a different delay for each element. The callback takes the index of each element as its argument
-and returns a number.
+By passing it a callback, you can define a different delay for each element. The callback takes the index of each element as its argument and returns a number.
 
 ```javascript
 // First element fades out after 1s, second element after 2s, etc.
-animate({
-  elements: "span",
-  easing: "linear",
+new Animate({
+  el: "span",
+  e: "linear",
   delay: index => (index + 1) * 1000,
-  opacity: [1, 0]
+  p: { opacity: [1, 0] }
 });
 ```
 
 ### update
 
+Defines a callback invoked on every frame of the animation.
+
 | Default | Type     |
 |:------- |:-------- |
 | `null`  | Function |
 
-Defines a callback invoked on every frame of the animation. The callback takes as its argument the animation progress (between 0 and 1) and can be used on its own without being tied to `elements`.
+The callback takes as its argument the animation progress (between 0 and 1) and can be used on its own without being tied to `el`.
 
 ```javascript
 // Linearly outputs the percentage increase during 5s
-animate({
+new Animate({
   duration: 5000,
   easing: "linear",
-  change: progress =>
+  update: progress =>
     document.body.textContent = `${Math.round(progress * 100)}%`
 });
 ```
 
-## Animations
-
-Animate Plus lets you animate HTML and SVG elements with any property that takes numeric values,
-including hexadecimal colors.
-
-```javascript
-// Animate the radius and fill color of an SVG circle
-animate({
-  elements: "circle",
-  r: [0, 50],
-  fill: ["#80f", "#fc0"]
-});
-```
-
-Each property you animate needs an array defining the start and end values. For convenience, you can
-omit everything but the numbers in the end values.
-
-```javascript
-// Same as ["translate(0px)", "translate(100px)"]
-animate({
-  elements: "span",
-  transform: ["translate(0px)", 100]
-});
-```
-
-These arrays can optionally be returned by a callback that takes the index of each element, just
-like with [duration](#duration) and [delay](#delay).
-
-```javascript
-// First element translates by 100px, second element by 200px, etc.
-animate({
-  elements: "span",
-  transform: index => ["translate(0px)", (index + 1) * 100]
-});
-```
+<br>
 
 ## Additional functions
 
 ### stop
 
-Stops the animations on the [elements](#elements) passed as the argument.
+Stops the animations on the [elements](#el).
 
 ```javascript
-import {stop} from "/animateplus.js";
+// Stop the animation 1s before the end.
 
-animate({
-  elements: "span",
-  easing: "linear",
-  duration: index => 8000 + index * 200,
-  loop: true,
-  transform: ["rotate(0deg)", 360]
+const duration = 5000;
+const animation = new Animate({
+  el: "span",
+  e: "io6",
+  d: duration,
+  p: { rotate: [0, 360] }
 });
 
-document.addEventListener("click", ({target}) => stop(target));
+// Play
+animation.play();
+
+// Stop after a certain moment.
+setTimeout(() => {
+    animation.stop();
+}, (duration - 1000));
 ```
 
-[Preview this example &#8594;](http://animateplus.com/examples/stop/)
 
-### delay
-
-Sets a timer in milliseconds. It differentiates from `setTimeout()` by returning a promise and being
-more accurate, consistent and battery-friendly. The [delay](#delay) option relies internally on
-this method.
-
-```javascript
-import {delay} from "/animateplus.js";
-
-delay(500).then(time => console.log(`${time}ms elapsed`));
-```
