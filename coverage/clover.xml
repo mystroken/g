@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1567112225054" clover="3.2.0">
-  <project timestamp="1567112225055" name="All files">
+<coverage generated="1567227542202" clover="3.2.0">
+  <project timestamp="1567227542202" name="All files">
     <metrics statements="24" coveredstatements="24" conditionals="4" coveredconditionals="3" methods="7" coveredmethods="7" elements="35" coveredelements="34" complexity="0" loc="24" ncloc="24" packages="1" files="4" classes="4"/>
     <file name="Raf.js" path="/Users/ken/www/lab/G/Raf.js">
       <metrics statements="17" coveredstatements="17" conditionals="2" coveredconditionals="1" methods="4" coveredmethods="4"/>
