@@ -6,8 +6,6 @@
 
 <br>
 
-NOTE: This project is deeply inspired by the [@ariiiman/r](https://github.com/ariiiman/r) repository. Initially I started it for learning purposes, but then I challenged myself to make it even more optimized (if I can).
-
 ## Installation
 
 ```bash
@@ -61,3 +59,17 @@ anim.play();
 ```
 
 [→ See more about the topic](https://github.com/mystroken/g/blob/master/ANIMATION.md)
+
+<br>
+
+## Credits
+
+For this project, I read a lot of articles and source codes. Here are some of them:
+
+[Gain Motion Superpowers with requestAnimationFrame](https://medium.com/@bdc/gain-motion-superpowers-with-requestanimationframe-ecc6d5b0d9a4](https://medium.com/@bdc/gain-motion-superpowers-with-requestanimationframe-ecc6d5b0d9a4)
+
+[Lodash](https://github.com/lodash/lodash) repository.
+
+[@ariiiman/r](https://github.com/ariiiman/r) repository.
+
+
