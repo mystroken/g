@@ -12,11 +12,11 @@
  *
  */
 function bindAll(c, a) {
-  var arrL = a.length;
 
-  for (var i = 0; i < arrL; i++) {
-      c[a[i]] = c[a[i]].bind(c);
-  }
+  a.forEach(function(f) {
+    c[f] = c[f].bind(c);
+  });
+
 }
 
 module.exports = bindAll;
