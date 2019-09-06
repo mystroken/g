@@ -1,8 +1,8 @@
 # G
 
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mystroken/s/issues)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mystroken/g/issues)
 
-> G is a garden of small JavaScript utilities.
+> :hibiscus::leaves: G is a garden of small JavaScript utilities.
 
 <br>
 
