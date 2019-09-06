@@ -62,7 +62,7 @@ this.anim.play()
  * @returns {Array}
  */
 function getElements(elements) {
-  if (Array.isArray(elements))
+  if (Array.isArray(elements) || typeof elements === 'object')
     return elements;
   if (!elements || elements.nodeType)
     return [elements];
@@ -127,135 +127,59 @@ Animate.prototype = {
 
     // We plan to animate DOM elements.
     if (this.at === Animate.TARGET_TYPE.DOM) {
-      var
-        translate = {},
-        scale = {},
-        rotate = {},
-        opacity = false
-      ;
+
       options.props = {};
 
-      // x          transform3d → {x: [start, end, unit]} → unit: 'px' for pixel || % if not declared
-      // y
-      // rotate    rotate(0.5turn) | rotate(540deg)
-      // rotateX   rotate3d()
-      // rotateY
-      // scale      scale(1.4)
-      // scaleX
-      // scaleY
-
-      // Translation: horizontally.
-      if (o.p.x) {
-        translate.x = {
-          s: o.p.x[0], // Start value.
-          e: o.p.x[1], // End value.
-          c: o.p.x[0], // Current value.
-          u: o.p.x[2] || '%', // Value unit.
-          // Original start and end.
-          o: {
-            s: o.p.x[0],
-            e: o.p.x[1],
-          },
-        };
-      }
-      // Translation: vertically.
-      if (o.p.y) {
-        translate.y = {
-          s: o.p.y[0], // Start value.
-          e: o.p.y[1], // End value.
-          c: o.p.y[0], // Current value.
-          u: o.p.y[2] || '%', // Value unit.
-          // Original start and end.
-          o: {
-            s: o.p.y[0],
-            e: o.p.y[1],
-          },
-        };
-      }
-      options.props.translate = translate;
-
-      // Scaling
       if (o.p.scale) {
         o.p.scaleX = o.p.scale;
         o.p.scaleY = o.p.scale;
+        delete o.p.scale;
       }
-      // X
-      if (o.p.scaleX) {
-        scale.x = {
-          s: o.p.scaleX[0], // Start value.
-          e: o.p.scaleX[1], // End value.
-          c: o.p.scaleX[0], // Current value.
-          // Original start and end.
-          o: {
-            s: o.p.scaleX[0],
-            e: o.p.scaleX[1],
-          },
-        };
-      }
-      // Y
-      if (o.p.scaleY) {
-        scale.y = {
-          s: o.p.scaleY[0], // Start value.
-          e: o.p.scaleY[1], // End value.
-          c: o.p.scaleY[0], // Current value.
-          // Original start and end.
-          o: {
-            s: o.p.scaleY[0],
-            e: o.p.scaleY[1],
-          },
-        };
-      }
-      options.props.scale = scale;
 
-      // Rotation
       if (o.p.rotate) {
         o.p.rotateX = o.p.rotate;
         o.p.rotateY = o.p.rotate;
+        delete o.p.rotate;
       }
-      // X
-      if (o.p.rotateX) {
-        rotate.x = {
-          s: o.p.rotateX[0], // Start value.
-          e: o.p.rotateX[1], // End value.
-          c: o.p.rotateX[0], // Current value.
-          u: o.p.y[2] || 'deg', // Value unit.
-          // Original start and end.
-          o: {
-            s: o.p.rotateX[0],
-            e: o.p.rotateX[1],
-          },
-        };
-      }
-      // Y
-      if (o.p.rotateY) {
-        rotate.y = {
-          s: o.p.rotateY[0], // Start value.
-          e: o.p.rotateY[1], // End value.
-          c: o.p.rotateY[0], // Current value.
-          u: o.p.y[2] || 'deg', // Value unit.
-          // Original start and end.
-          o: {
-            s: o.p.rotateY[0],
-            e: o.p.rotateY[1],
-          },
-        };
-      }
-      options.props.rotate = rotate;
 
-      // Opacity
-      if (o.p.opacity) {
-        opacity = {
-          s: o.p.opacity[0], // Start value.
-          e: o.p.opacity[1], // End value.
-          c: o.p.opacity[0], // Current value.
+      Object.keys(o.p).forEach(function(i) {
+
+        options.props[i] = {
+          s: o.p[i][0], // Start value.
+          e: o.p[i][1], // End value.
+          c: o.p[i][0], // Current value.
           // Original start and end.
           o: {
-            s: o.p.opacity[0],
-            e: o.p.opacity[1],
+            s: o.p[i][0],
+            e: o.p[i][1],
           },
         };
-      }
-      options.props.opacity = opacity;
+
+        // Set property unit.
+        if (i !== 'scale' && i !== 'opacity')
+          options.props[i]['u'] = o.p[i][2] || (i==='x' || i==='y') ? '%' : 'deg';
+      });
+
+    }
+    else if(this.at === Animate.TARGET_TYPE.OBJECT) {
+      options.props = {};
+      var keys = Object.keys(o.p);
+
+      keys.forEach(function(i) {
+        options.props[i] = {
+          s: o.p[i][0], // Start value.
+          e: o.p[i][1], // End value.
+          c: o.p[i][0], // Current value.
+          // Original start and end.
+          o: {
+            s: o.p[i][0],
+            e: o.p[i][1],
+          },
+        };
+      });
+
+      // Properties length.
+      options.props.pL = keys.length;
     }
 
     // Schedule the animation according to the delay.
@@ -321,31 +245,31 @@ Animate.prototype = {
     if (this.at === Animate.TARGET_TYPE.DOM) {
       // When we're animating HTML,
       // we either deal with transform, or opacity.
-      if (props.translate.x) {
-        props.translate.x.c = this._lerp(props.translate.x.s, props.translate.x.e);
-        _s.transform += 'translateX('+ props.translate.x.c +''+ props.translate.x.u +') ';
+      if (props.x) {
+        props.x.c = this._lerp(props.x.s, props.x.e);
+        _s.transform += 'translateX('+ props.x.c +''+ props.x.u +') ';
         _s.transform += 'translateZ(0) ';
       }
-      if (props.translate.y) {
-        props.translate.y.c = this._lerp(props.translate.y.s, props.translate.y.e);
-        _s.transform += 'translateY('+ props.translate.y.c +''+ props.translate.y.u +')';
+      if (props.y) {
+        props.y.c = this._lerp(props.y.s, props.y.e);
+        _s.transform += 'translateY('+ props.y.c +''+ props.y.u +')';
         _s.transform += 'translateZ(0) ';
       }
-      if (props.scale.x) {
-        props.scale.x.c = this._lerp(props.scale.x.s, props.scale.x.e);
-        _s.transform += 'scaleX('+ props.scale.x.c +') ';
+      if (props.scaleX) {
+        props.scaleX.c = this._lerp(props.scaleX.s, props.scaleX.e);
+        _s.transform += 'scaleX('+ props.scaleX.c +') ';
       }
-      if (props.scale.y) {
-        props.scale.y.c = this._lerp(props.scale.y.s, props.scale.y.e);
-        _s.transform += 'scaleY('+ props.scale.y.c +') ';
+      if (props.scaleY) {
+        props.scaleY.c = this._lerp(props.scaleY.s, props.scaleY.e);
+        _s.transform += 'scaleY('+ props.scaleY.c +') ';
       }
-      if (props.rotate.x) {
-        props.rotate.x.c = this._lerp(props.rotate.x.s, props.rotate.x.e);
-        _s.transform += 'rotateX('+ props.rotate.x.c +''+ props.rotate.x.u +') ';
+      if (props.rotateX) {
+        props.rotateX.c = this._lerp(props.rotateX.s, props.rotateX.e);
+        _s.transform += 'rotateX('+ props.rotateX.c +''+ props.rotateX.u +') ';
       }
-      if (props.rotate.y) {
-        props.rotate.y.c = this._lerp(props.rotate.y.s, props.rotate.y.e);
-        _s.transform += 'rotateY('+ props.rotate.y.c +''+ props.rotate.y.u +') ';
+      if (props.rotateY) {
+        props.rotateY.c = this._lerp(props.rotateY.s, props.rotateY.e);
+        _s.transform += 'rotateY('+ props.rotateY.c +''+ props.rotateY.u +') ';
       }
       if (props.opacity) {
         props.opacity.c = this._lerp(props.opacity.s, props.opacity.e);
@@ -354,10 +278,16 @@ Animate.prototype = {
 
     }
     // Else if we're trying to animate an object properties.
-    else if (this.at === Animate.TARGET_TYPE.OBJECT) {}
+    else if (this.at === Animate.TARGET_TYPE.OBJECT) {
+      for (var i in props) {
+        if (this.o.el.hasOwnProperty(i)) {
+          this.o.el[i] = this._lerp(props[i].s, props[i].e);
+        }
+      }
+    }
 
     // 4. Update these properties
-    this.o.el.forEach(function(element) {
+    (this.at === Animate.TARGET_TYPE.DOM) && this.o.el.forEach(function(element) {
       element.style.opacity = _s.opacity;
       element.style.transform = _s.transform;
     });

@@ -6,7 +6,7 @@
   "author": "Mystro Ken <mystroken@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "jest"
+    "test": "jest --coverage"
   },
   "homepage": "https://github.com/mystroken/g#readme",
   "repository": {
