@@ -52,21 +52,74 @@ this.anim.play()
 */
 
 /**
+ * Returns true if it is a DOM node.
+ *
+ * querySelector()
+ *
+ * @param {*} o
+ */
+function isNode(o) {
+  return o instanceof HTMLElement;
+}
+
+/**
+ * Returns true if it's a DOM node list.
+ *
+ * Result of:
+ * querySelectorAll()
+ *
+ * @param {*} o
+ */
+function isNodeList(o) {
+  return o instanceof NodeList;
+}
+
+/**
+ * Returns true if it is a DOM element.
+ *
+ * Result of:
+ * getElementById()
+ *
+ * @param {*} o
+ */
+function isElement(o) {
+  return o instanceof HTMLElement;
+}
+
+/**
+ * Returns true if it is a DOM element collection.
+ *
+ * Result of:
+ * getElementsByClassName()
+ * getElementsByTagName()
+ *
+ * @param {*} o
+ */
+function isElementCollection(o) {
+  return o instanceof HTMLCollection;
+}
+
+/**
  * getElements
  *
  * Select one or many dom elements
  * by passing string or their reference
  * and returns an array of dom elements.
  *
- * @param {Array|HTMLElement|HTMLAllCollection|string} elements
- * @returns {Array}
+ * @param {Array|HTMLElement|NodeList|HTMLCollection|string} elements
+ * @returns {Array|object}
+ * @see https://developer.mozilla.org/en/docs/Web/API/Element
  */
 function getElements(elements) {
-  if (Array.isArray(elements) || typeof elements === 'object')
-    return elements;
-  if (!elements || elements.nodeType)
+  if (typeof elements === 'string')
+    return Array.from( document.querySelectorAll(elements) );
+  if (isNode(elements) || isElement(elements))
     return [elements];
-  return Array.from(typeof elements === 'string' ? document.querySelectorAll(elements) : elements);
+  if (isNodeList(elements) || isElementCollection(elements))
+    return Array.from(elements);
+  if (Array.isArray(elements))
+    return elements;
+  return elements;
 }
 
 /**
