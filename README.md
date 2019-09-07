@@ -1,8 +1,8 @@
 # G
 
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mystroken/s/issues)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mystroken/g/issues)
 
-> G is a garden of small JavaScript utilities.
+> :hibiscus::leaves: G is a garden of small JavaScript utilities.
 
 <br>
 
@@ -66,7 +66,7 @@ anim.play();
 
 For this project, I read a lot of articles and source codes. Here are some of them:
 
-[Gain Motion Superpowers with requestAnimationFrame](https://medium.com/@bdc/gain-motion-superpowers-with-requestanimationframe-ecc6d5b0d9a4](https://medium.com/@bdc/gain-motion-superpowers-with-requestanimationframe-ecc6d5b0d9a4)
+[Gain Motion Superpowers with requestAnimationFrame](https://medium.com/@bdc/gain-motion-superpowers-with-requestanimationframe-ecc6d5b0d9a4)
 
 [Lodash](https://github.com/lodash/lodash) repository.
 
