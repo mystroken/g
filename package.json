@@ -1,6 +1,6 @@
 {
   "name": "@mystroken/g",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A garden of small JavaScript utilities.",
   "main": "index.js",
   "author": "Mystro Ken <mystroken@gmail.com>",
@@ -14,7 +14,7 @@
     "url": "git+https://github.com/mystroken/g.git"
   },
   "files": [
-    "index.js"
+    "**.js"
   ],
   "keywords": [
     "javascript",
