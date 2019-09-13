@@ -6,7 +6,9 @@
   "author": "Mystro Ken <mystroken@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "dev": "node scripts/dev/index.js",
+    "build": "node scripts/prod/index.js"
   },
   "homepage": "https://github.com/mystroken/g#readme",
   "repository": {
@@ -14,6 +16,7 @@
     "url": "git+https://github.com/mystroken/g.git"
   },
   "files": [
+    "dist",
     "**.js"
   ],
   "keywords": [
@@ -22,6 +25,13 @@
     "creativecoding"
   ],
   "devDependencies": {
-    "jest": "^24.9.0"
+    "globby": "^10.0.1",
+    "jest": "^24.9.0",
+    "node-watch": "^0.6.3",
+    "rollup": "^1.19.4",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-filesize": "^6.2.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^5.1.1"
   }
 }

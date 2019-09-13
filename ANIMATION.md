@@ -46,6 +46,38 @@ new Animate({
 });
 ```
 
+### p
+
+Determines the element properties to animate.  
+
+| Default         | Type   |
+|:--------------- |:------ |
+| ```undefined``` | Object |
+
+For performance purposes, you can only animate the opacity and css transformation properties of DOM elements.
+
+```javascript
+{
+    // Use an array to define the 
+    // start value and the end value.
+    opacity: [0, 1],
+    // You can pass the unit as
+    // third element of the Array.
+    x: [0, 100, 'px'],
+    // For x & y, default unit is '%'
+    y: [10, 100],
+    scale: [1, 1.5],
+    scaleX: [0, 1],
+    scaleY: [0, 1],
+    // Default unit for rotation is 'deg'
+    rotate: [0, 360],
+    rotateX: [0, 1, 'turn'],
+    rotateY: [-90, 180],
+}
+```
+
+
+
 ### e
 
 Determines the acceleration curve of your animation (the easing).
@@ -64,7 +96,7 @@ Except the `linear` easing, all the available easings are composed as follows:
   
   - `io`: InOut (accelerated then decelerated).
 
-- Choose the type of the curse: 
+- Choose the type of the curve: 
   
   - `1`: Sine
   
@@ -140,8 +172,8 @@ The callback takes as its argument the animation progress (between 0 and 1) and 
 ```javascript
 // Linearly outputs the percentage increase during 5s
 new Animate({
-  duration: 5000,
-  easing: 'linear',
+  d: 5000,
+  e: 'linear',
   update: progress =>
     document.body.textContent = `${Math.round(progress * 100)}%`
 });
