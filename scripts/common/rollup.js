@@ -19,7 +19,9 @@ module.exports = o => {
 
   if (production) {
     // minification
-    plugins.push(terser());
+    plugins.push(terser({
+      keep_fnames: false
+    }));
     plugins.push(filesize())
   }
 

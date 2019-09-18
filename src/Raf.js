@@ -13,31 +13,64 @@
  * const loop = elapsed => console.log(elapsed)
  */
 function Raf(loop) {
+  /**
+   * The callback to call.
+   * @type {Function}
+   */
   this.cb = loop;
-  this.rAF = null;
-  this.startTime = null;
-  this.shouldStopTheLoop = false;
 
-  this.tick = this.tick.bind(this);
+  /**
+   * requestAnimationFrame ID
+   * @type {*}
+   */
+  this.r = null;
+
+  /**
+   * The start time.
+   * @type {*}
+   */
+  this.s = null;
+
+  /**
+   * Is it the end?
+   * @type {boolean}
+   */
+  this.E = false;
+
+  /**
+   * Tick
+   * @type {FrameRequestCallback}
+   * @private
+   */
+  this._t = this._t.bind(this);
 }
 
+/**
+ * Start the loop.
+ */
 Raf.prototype.run = function() {
-  this.shouldStopTheLoop = false;
-  this.startTime = performance.now();
-  this.rAF = requestAnimationFrame(this.tick);
+  this.E = false;
+  this.s = performance.now();
+  this.r = requestAnimationFrame(this._t);
 };
 
+/**
+ * Break the loop.
+ */
 Raf.prototype.stop = function() {
-  this.shouldStopTheLoop = true;
-  cancelAnimationFrame(this.rAF);
+  this.E = true;
+  cancelAnimationFrame(this.r);
 };
 
-Raf.prototype.tick = function(now) {
-  if (this.shouldStopTheLoop) return;
-  this.cb(now - this.startTime);
-  this.rAF = requestAnimationFrame(this.tick);
+/**
+ * The tick function.
+ * @param {number} t the current time.
+ * @private
+ */
+Raf.prototype._t = function(t) {
+  if (this.E) return;
+  this.cb(t - this.s);
+  this.r = requestAnimationFrame(this._t);
 };
-
-
 
 export default Raf;

@@ -128,11 +128,17 @@ function getElements(elements) {
  * @constructor
  */
 function AnimationEntry(o) {
-  bindAll(this, ['_tick']);
+  bindAll(this, ['_run', '_tick']);
 
   this.v = {
+    // Element to animate.
+    el: o.el,
+    // The animation type. (DOM or OBJECT)
+    t: o.t,
     // The animation duration.
     d: o.d,
+    // The properties to animate.
+    p: o.p,
     // The animation delay.
     delay: o.delay,
   };
@@ -145,12 +151,107 @@ function AnimationEntry(o) {
   this.pE = 0;
   // The loop function.
   this.rAF = new Raf(this._tick);
-  // The timeout function.
-  this.delay = null;
+
+  // Schedule the animation according to the delay.
+  this.delay = new Delay(this._run, o.delay);
 }
 
 AnimationEntry.prototype = {
-  _tick: function() {},
+  /**
+   * Start the animation.
+   */
+  play: function() {
+    this.pause();
+    this.delay.run();
+  },
+
+  /**
+   * Pause the animation.
+   */
+  pause: function() {
+    this.rAF.stop();
+    if (this.delay) this.delay.stop();
+  },
+
+  /**
+   *
+   * @private
+   */
+  _run: function() {
+    this.rAF.run();
+  },
+
+  /**
+   *
+   * @param {number} e The elapsed time.
+   * @private
+   */
+  _tick: function(e) {
+    // 1. Calculate the progress
+    this.e = clamp(e, 0, this.v.d);
+    this.p = clamp(this.e / this.v.d, 0, 1);
+
+    // 2. Apply the ease.
+    // this.pE = easing(this.p);
+
+    // 3. Compute values of
+    // animated properties
+    var props = this.v.p;
+    var _s = {
+      transform: ''
+    }; // Style.
+
+    // If we're trying to animate DOM elements.
+    if (this.v.t === Animate.TARGET_TYPE.DOM) {
+      // When we're animating HTML,
+      // we either deal with transform, or opacity.
+      if (props.x) {
+        props.x.c = this._lerp(props.x.s, props.x.e);
+        _s.transform += 'translateX('+ props.x.c +''+ props.x.u +') ';
+        _s.transform += 'translateZ(0) ';
+      }
+      if (props.y) {
+        props.y.c = this._lerp(props.y.s, props.y.e);
+        _s.transform += 'translateY('+ props.y.c +''+ props.y.u +')';
+        _s.transform += 'translateZ(0) ';
+      }
+      if (props.scaleX) {
+        props.scaleX.c = this._lerp(props.scaleX.s, props.scaleX.e);
+        _s.transform += 'scaleX('+ props.scaleX.c +') ';
+      }
+      if (props.scaleY) {
+        props.scaleY.c = this._lerp(props.scaleY.s, props.scaleY.e);
+        _s.transform += 'scaleY('+ props.scaleY.c +') ';
+      }
+      if (props.rotateX) {
+        props.rotateX.c = this._lerp(props.rotateX.s, props.rotateX.e);
+        _s.transform += 'rotateX('+ props.rotateX.c +''+ props.rotateX.u +') ';
+      }
+      if (props.rotateY) {
+        props.rotateY.c = this._lerp(props.rotateY.s, props.rotateY.e);
+        _s.transform += 'rotateY('+ props.rotateY.c +''+ props.rotateY.u +') ';
+      }
+      if (props.opacity) {
+        props.opacity.c = this._lerp(props.opacity.s, props.opacity.e);
+        _s.opacity = props.opacity.c;
+      }
+
+    }
+    // Else if we're trying to animate an object properties.
+    else if (this.v.t === Animate.TARGET_TYPE.OBJECT) {
+      for (var i in props) {
+        if (this.v.el.hasOwnProperty(i)) {
+          this.v.el[i] = this._lerp(props[i].s, props[i].e);
+        }
+      }
+    }
+
+    // 4. Update these properties
+    if (this.v.t === Animate.TARGET_TYPE.DOM) {
+      this.v.el.style.opacity = _s.opacity;
+      this.v.el.style.transform = _s.transform;
+    }
+  },
 };
 
 /**
@@ -168,6 +269,9 @@ function Animate(o) {
   this.delay = null; // timeout function.
   this.raf = new Raf(this._tick); // loop function.
   this.at = null; // animation target (Object|HTML)
+
+  // Animation entries.
+  this.entries = [];
 
   // Get the animations properties.
   this.o = this._init(o);
@@ -265,6 +369,27 @@ Animate.prototype = {
       // Properties length.
       options.props.pL = keys.length;
     }
+
+    // Instantiate animations entries.
+    if (this.at === Animate.TARGET_TYPE.DOM) {
+      options.el.forEach(function (el) {
+        this.entries.push(
+          new AnimationEntry({
+            // Element to animate.
+            el: el,
+            // The animation type. (DOM or OBJECT)
+            t: Animate.TARGET_TYPE.DOM,
+            // The animation duration.
+            d: o.d,
+            // The properties to animate.
+            p: o.p,
+            // The animation delay.
+            delay: o.delay,
+          })
+        );
+      });
+    }
+
 
     // Schedule the animation according to the delay.
     this.delay = new Delay(this._run, options.delay);
