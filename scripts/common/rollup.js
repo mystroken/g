@@ -12,16 +12,12 @@ module.exports = o => {
   // Rollup plugins
   const plugins = [
     resolve(), // support modules from node_modules.
-    commonjs({
-      include: './src/**'
-    }), // support of require.
+    commonjs(), // support of require.
   ];
 
   if (production) {
     // minification
-    plugins.push(terser({
-      keep_fnames: false
-    }));
+    plugins.push(terser());
     plugins.push(filesize())
   }
 
@@ -33,7 +29,7 @@ module.exports = o => {
     return ({
       entry: inputFile,
       output: {
-        cjs: path.join(o.dest.cjs, base),
+        // cjs: path.join(o.dest.cjs, base),
         iife: path.join(o.dest.iife, base)
       },
       name: name === 'index' ? 'G' : name,
@@ -48,6 +44,7 @@ module.exports = o => {
         plugins
       })
       .then(bundle => {
+
         // IIFE Export
         bundle
           .write({
@@ -55,18 +52,11 @@ module.exports = o => {
             format: 'iife',
             name: c.name
           })
-        ;
-
-        // CJS Export
-        bundle
-          .write({
-            file: c.output.cjs,
-            format: 'cjs'
-          })
           .then(() => {
             if (i === (L-1)) o.cb();
           })
         ;
+
       })
     ;
   });

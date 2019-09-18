@@ -1,1 +1,95 @@
-"use strict";var Ease={linear:function(n){return n},i1:function(n){return 1-Math.cos(n*(Math.PI/2))},o1:function(n){return Math.sin(n*(Math.PI/2))},io1:function(n){return-.5*(Math.cos(Math.PI*n)-1)},i2:function(n){return n*n},o2:function(n){return n*(2-n)},io2:function(n){return n<.5?2*n*n:(4-2*n)*n-1},i3:function(n){return n*n*n},o3:function(n){return--n*n*n+1},io3:function(n){return n<.5?4*n*n*n:(n-1)*(2*n-2)*(2*n-2)+1},i4:function(n){return n*n*n*n},o4:function(n){return 1- --n*n*n*n},io4:function(n){return n<.5?8*n*n*n*n:1-8*--n*n*n*n},i5:function(n){return n*n*n*n*n},o5:function(n){return 1+--n*n*n*n*n},io5:function(n){return n<.5?16*n*n*n*n*n:1+16*--n*n*n*n*n},i6:function(n){return 0===n?0:Math.pow(2,10*(n-1))},o6:function(n){return 1===n?1:1-Math.pow(2,-10*n)},io6:function(n){return 0===n?0:1===n?1:(n/=.5)<1?.5*Math.pow(2,10*(n-1)):.5*(2-Math.pow(2,-10*--n))}};module.exports=Ease;
+'use strict';
+/*
+──────────────────────────────────────────
+──────────────────────────────────────────
+EASE
+──────────────────────────────────────────
+
+──────────────────────────────────────────
+PROPERTIES
+──────────
+
+i           In
+o           Out
+io          InOut
+1           Sine
+2           Quad
+3           Cubic
+4           Quart
+5           Quint
+6           Expo
+
+USAGE
+─────
+const eased = Ease['linear'](multiplier);
+*/
+
+/**
+ * Ease
+ *
+ * @type {{o1: (function(*): number), linear: (function(*): *), o2: (function(*): number), o3: (function(*): number), o4: (function(*): number), o5: (function(*): number), o6: (function(*): number), i1: (function(*): number), i2: (function(*): number), io1: (function(*): number), i3: (function(*): number), i4: (function(*): number), io3: (function(*): number), i5: (function(*): number), io2: (function(*): number), i6: (function(*): number), io5: (function(*): number), io4: (function(*): number), io6: Ease.io6}}
+ */
+var Ease = {
+  linear: function (t) {
+    return t;
+  },
+  i1: function (t) {
+    return -Math.cos(t * (Math.PI / 2)) + 1;
+  },
+  o1: function (t) {
+    return Math.sin(t * (Math.PI / 2));
+  },
+  io1: function (t) {
+    return -0.5 * (Math.cos(Math.PI * t) - 1);
+  },
+  i2: function (t) {
+    return t * t;
+  },
+  o2: function (t) {
+    return t * (2 - t);
+  },
+  io2: function (t) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  },
+  i3: function (t) {
+    return t * t * t;
+  },
+  o3: function (t) {
+    return (--t) * t * t + 1;
+  },
+  io3: function (t) {
+    return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+  },
+  i4: function (t) {
+    return t * t * t * t;
+  },
+  o4: function (t) {
+    return 1 - (--t) * t * t * t;
+  },
+  io4: function (t) {
+    return t < 0.5 ? 8 * t * t * t * t : 1 - 8 * (--t) * t * t * t;
+  },
+  i5: function (t) {
+    return t * t * t * t * t;
+  },
+  o5: function (t) {
+    return 1 + (--t) * t * t * t * t;
+  },
+  io5: function (t) {
+    return t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * (--t) * t * t * t * t;
+  },
+  i6: function (t) {
+    return (t === 0) ? 0 : Math.pow(2, 10 * (t - 1));
+  },
+  o6: function (t) {
+    return (t === 1) ? 1 : 1 - Math.pow(2, -10 * t);
+  },
+  io6: function (t) {
+    if (t === 0) return 0;
+    if (t === 1) return 1;
+    if ((t /= 0.5) < 1) return 0.5 * Math.pow(2, 10 * (t - 1));
+    return 0.5 * (-Math.pow(2, -10 * --t) + 2);
+  }
+};
+
+export default Ease;

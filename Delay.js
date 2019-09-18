@@ -1,1 +1,50 @@
-"use strict";function Raf(t){this.cb=t,this.r=null,this.s=null,this.E=!1,this._t=this._t.bind(this)}function clamp(t,i,s){return Math.min(Math.max(t,i),s)}function Delay(t,i){this.d=i,this.cb=t,this.loop=this.loop.bind(this),this.rAF=new Raf(this.loop)}Raf.prototype.run=function(){this.E=!1,this.s=performance.now(),this.r=requestAnimationFrame(this._t)},Raf.prototype.stop=function(){this.E=!0,cancelAnimationFrame(this.r)},Raf.prototype._t=function(t){this.E||(this.cb(t-this.s),this.r=requestAnimationFrame(this._t))},Delay.prototype={run:function(){0===this.d?this.cb():this.rAF.run()},stop:function(){this.rAF.stop()},loop:function(t){clamp(t,0,this.d)===this.d&&(this.stop(),this.cb())}},module.exports=Delay;
+'use strict';
+import Raf from "./Raf";
+import clamp from "./clamp";
+
+/**
+ *
+ * An optimized implementation
+ * of window.setTimeout
+ *
+ * @param {Function} cb The callback to call after the delay.
+ * @param {Number} d The duration, in ms, of the delay.
+ * @returns {void}
+ * @example
+ *
+ * const d = 2000;
+ * const cb = () => console.log(`Call me ${d}ms later`);
+ *
+ * const delay = new Delay(cb, d);
+ * delay.run();
+ * delay.stop();
+ *
+ */
+function Delay(cb, d) {
+  this.d = d;
+  this.cb = cb;
+  this.loop = this.loop.bind(this);
+  this.rAF = new Raf(this.loop);
+}
+
+Delay.prototype = {
+
+  run: function() {
+    if (this.d === 0) this.cb();
+    else this.rAF.run();
+  },
+
+  stop: function() {
+    this.rAF.stop();
+  },
+
+  loop: function(e) {
+    var elapsed = clamp(e, 0, this.d);
+    if (elapsed === this.d) {
+      this.stop();
+      this.cb();
+    }
+  },
+};
+
+export default Delay;

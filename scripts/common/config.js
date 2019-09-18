@@ -1,10 +1,10 @@
 module.exports = {
   js: {
-    entry: './src/*.js',
+    entry: './*.js',
     dest: {
       cjs: './',
       iife: './dist/',
     },
-    watch: './src/',
+    watch: './*.js',
   },
 };

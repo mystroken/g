@@ -1,6 +1,46 @@
-/**
- * mutation.js v0.1.0
- */
+/*
+
+
+──────────────────────────────────────────
+──────────────────────────────────────────
+Animate
+──────────────────────────────────────────
+──────────────────────────────────────────
+
+OBJECT
+──────
+
+elements            elements
+properties          properties
+duration            duration
+easing              easing
+delay               delay
+callback            callback to call at the end.
+update              custom function called on each frame
+loop  #wip
+speed #wip
+reverse #wip
+
+PROPERTIES
+──────────
+
+x                   transform3d → {x: [start, end, unit]} → unit: 'px' for pixel || % if not declared
+y
+rotate
+rotateX
+rotateY
+scale
+scaleX
+scaleY
+opacity
+
+EXAMPLE
+───────────────────
+
+this.anim = new Animate({el: '#id', p: {x: [0, 600, 'px']}, d: 2000, e: 'o4'})
+this.anim.play()
+
+*/
 'use strict';
 
 import bindAll from './bindAll';
@@ -55,7 +95,7 @@ function g(elements) {
   if (isNL(elements)) return Array.from(elements);
   if (Array.isArray(elements)) return elements;
 
-  return elements;
+  return [elements];
 }
 
 /**
@@ -169,10 +209,12 @@ L.prototype = {
 };
 
 /**
- * Move Entry
+ * Each element is animated
+ * individually
+ *
  * @constructor
  */
-function E(o) {
+function AnimationEntry(o) {
   bindAll(this, ['_run', '_tick']);
 
   // Keep variables.
@@ -191,7 +233,7 @@ function E(o) {
   this._delay = new Delay(this._run, o.delay);
 }
 
-E.prototype = {
+AnimationEntry.prototype = {
 
   /**
    * Run the animation.
@@ -299,8 +341,20 @@ E.prototype = {
 
     // 4. Update these properties
     if (this._v.el) {
-      Object.assign(this._v.el.style, this._style());
-      console.log(this._v.k);
+      // DOM
+      if (this._v.type === Animate.TARGET_TYPE.DOM) {
+        var s = this._style();
+        if (s.transform) this._v.el.style.transform = s.transform;
+        if (s.opacity) this._v.el.style.opacity = s.opacity;
+      }
+      // OBJECT
+      else if (this._v.type === Animate.TARGET_TYPE.OBJECT) {
+        for (var i in this._v.k) {
+          if (this._v.el.hasOwnProperty(i)) {
+            this._v.el[i] = this._li(this._v.k[i].s, this._v.k[i].e);
+          }
+        }
+      }
     }
 
     // 5. Call the update callback
@@ -321,13 +375,17 @@ E.prototype = {
 
 
 /**
- * Move Manager
- * @param o
+ * Animation manager
+ *
+ * Split create many animation
+ * entries for each animatable.
+ *
+ * @param {object} o
  * @constructor
  */
-function M(o) {
+function Animate(o) {
   // Bind methods
-  bindAll(this, ['_run', '_tick']);
+  // bindAll(this, ['_run', '_tick']);
 
   /**
    * Register all animation into a stack.
@@ -372,7 +430,24 @@ function M(o) {
   this._v = this._init(o);
 }
 
-M.prototype = {
+
+/**
+ * Animation type
+ *
+ * Since we can animation dom element
+ * and javascript object, we need
+ * to know what type of object
+ * we're going to animate.
+ *
+ * @type {{DOM: number, OBJECT: number}}
+ */
+Animate.TARGET_TYPE = {
+  DOM: 0,
+  OBJECT: 1
+};
+
+
+Animate.prototype = {
   /**
    * Play the animation.
    */
@@ -432,11 +507,12 @@ M.prototype = {
       // Add the animation entry
       // into the queue.
       this._L.a(
-        new E({
+        new AnimationEntry({
           el: el,
           d: stagger(v.d, i),
           k: keyframes,
           e: v.e,
+          type: isN(el) ? Animate.TARGET_TYPE.DOM : Animate.TARGET_TYPE.OBJECT,
           delay: stagger(v.delay, i),
           cb: v.cb,
           update: v.update,
@@ -448,21 +524,6 @@ M.prototype = {
     return v;
   },
 
-  /**
-   *
-   * @private
-   */
-  _run: function() {
-    this._raf.run();
-  },
-
-  /**
-   *
-   * @param {number} elapsed The elapsed time.
-   * @private
-   */
-  _tick: function(elapsed) {},
-
 };
 
-export default M;
+export default Animate;
