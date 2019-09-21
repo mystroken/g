@@ -158,6 +158,21 @@ new Animate({
   p: { opacity: [1, 0] }
 });
 ```
+### cb
+Defines a callback invoked at the end of the animation.
+
+| Default | Type     |
+|:------- |:-------- |
+| `null`  | Function |
+
+```javascript
+new Animate({
+  el: 'span',
+  d: 1000,
+  p: { y: [100, 0] },
+  cb: () => console.log('The animation is ended !'),
+})
+```
 
 ### update
 
@@ -183,9 +198,9 @@ new Animate({
 
 ## Additional functions
 
-### stop
+### pause
 
-Stops the animations on the [elements](#el).
+Pauses the animations on the [elements](#el).
 
 ```javascript
 // Stop the animation 1s before the end.
@@ -203,6 +218,6 @@ animation.play();
 
 // Stop after a certain moment.
 setTimeout(() => {
-    animation.stop();
+    animation.pause();
 }, (duration - 1000));
 ```
