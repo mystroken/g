@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Bind a context to some methods.
  *

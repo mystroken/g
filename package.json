@@ -25,6 +25,7 @@
     "creativecoding"
   ],
   "devDependencies": {
+    "eslint-config-airbnb-es5": "^1.2.0",
     "globby": "^10.0.1",
     "jest": "^24.9.0",
     "node-watch": "^0.6.3",

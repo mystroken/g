@@ -47,7 +47,7 @@ delay.run();
 ###### Animate things
 
 ```javascript
-const anim = new Animate({
+const anim = animate({
     el: '#loader', // Select the element to animate.
     d: 2000, // Set the animation duration in ms.
     // Set properties to animate.
@@ -71,5 +71,3 @@ For this project, I read a lot of articles and source codes. Here are some of th
 [Lodash](https://github.com/lodash/lodash) repository.
 
 [@ariiiman/r](https://github.com/ariiiman/r) repository.
-
-

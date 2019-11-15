@@ -7,9 +7,9 @@ Animate is a JavaScript animation library focusing on performance.
 `npm install @mystroken/g` and start animating things:
 
 ```javascript
-import Animate from '@mystroken/g/animate.js';
+import animate from '@mystroken/g/animate.js';
 
-const anim = new Animate({
+const anim = animate({
     // Select the element to animate.
     el: '#loader',
     // Set the animation duration in ms.
@@ -38,7 +38,7 @@ Determines the DOM elements to animate. You can either pass it a CSS selector or
 | `undefined` | String \| Element \| NodeList \| Array |
 
 ```javascript
-new Animate({
+animate({
   el: document.body.children,
   p: {
       x: [0, 800, 'px'],
@@ -76,15 +76,13 @@ For performance purposes, you can only animate the opacity and css transformatio
 }
 ```
 
-
-
 ### e
 
 Determines the acceleration curve of your animation (the easing).
 
-| Default  | Type               |
-|:-------- |:------------------ |
-| `linear` | String \| Function |
+| Default | Type               |
+|:------- |:------------------ |
+| `io2`   | String \| Function |
 
 Except the `linear` easing, all the available easings are composed as follows:
 
@@ -113,7 +111,7 @@ Except the `linear` easing, all the available easings are composed as follows:
 NOTE: you can pass a function if you want to use your own easing function. The function takes the multiplier as its argument and returns a number.
 
 ```javascript
-new Animate({
+animate({
   el: 'span',
   e: 'io2', // Quad curve - Accelerated then decelerated.
 });
@@ -131,7 +129,7 @@ By passing it a callback, you can define a different duration for each element. 
 
 ```javascript
 // First element fades out in 1s, second element in 2s, etc.
-new Animate({
+animate({
   el: 'span',
   e: 'linear',
   d: index => (index + 1) * 1000,
@@ -151,14 +149,16 @@ By passing it a callback, you can define a different delay for each element. The
 
 ```javascript
 // First element fades out after 1s, second element after 2s, etc.
-new Animate({
+animate({
   el: 'span',
   e: 'linear',
   delay: index => (index + 1) * 1000,
   p: { opacity: [1, 0] }
 });
 ```
+
 ### cb
+
 Defines a callback invoked at the end of the animation.
 
 | Default | Type     |
@@ -166,7 +166,7 @@ Defines a callback invoked at the end of the animation.
 | `null`  | Function |
 
 ```javascript
-new Animate({
+animate({
   el: 'span',
   d: 1000,
   p: { y: [100, 0] },
@@ -178,27 +178,28 @@ new Animate({
 
 Defines a callback invoked on every frame of the animation.
 
-| Default | Type     |
-|:------- |:-------- |
-| `null`  | Function |
+| Default | Type     | Params                   |
+|:------- |:-------- | ------------------------ |
+| `null`  | Function | progress, remaining time |
 
 The callback takes as its argument the animation progress (between 0 and 1) and can be used on its own without being tied to `el`.
 
 ```javascript
 // Linearly outputs the percentage increase during 5s
-new Animate({
+animate({
   d: 5000,
   e: 'linear',
-  update: progress =>
+  update: (progress, remaining) =>
+    console.log(`Remaining time before the end: ${remaining}`)
     document.body.textContent = `${Math.round(progress * 100)}%`
 });
 ```
 
 <br>
 
-## Additional functions
+## Additional functions and properties
 
-### pause
+### pause()
 
 Pauses the animations on the [elements](#el).
 
@@ -206,7 +207,7 @@ Pauses the animations on the [elements](#el).
 // Stop the animation 1s before the end.
 
 const duration = 5000;
-const animation = new Animate({
+const animation = animate({
   el: 'span',
   e: 'io6',
   d: duration,
@@ -220,4 +221,18 @@ animation.play();
 setTimeout(() => {
     animation.pause();
 }, (duration - 1000));
+```
+
+### duration
+
+Returns the real duration of the animation instance (especially useful when you have delayed the animation of selected elements).
+
+```javascript
+const animation = animate({ 
+  el: 'div',
+  delay: index => index * 1000,
+  p: { opacity: 1 } 
+});
+
+console.log(`The animation will last ${animation.duration} ms`)
 ```

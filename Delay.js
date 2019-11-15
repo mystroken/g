@@ -1,4 +1,3 @@
-'use strict';
 import Raf from "./Raf";
 import clamp from "./clamp";
 
