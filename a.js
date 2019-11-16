@@ -289,9 +289,7 @@ function getAnimationType(key) {
  * @returns {AnimationInstance}
  */
 function createNewAnimation(params) {
-  function reset() {}
-
-  return {
+  var animation = {
     el: params.el,
     type: params.type,
     p: params.p,
@@ -299,9 +297,20 @@ function createNewAnimation(params) {
       e: params.e,
       d: params.d,
       D: params.delay
-    },
-    reset: reset
+    }
   };
+
+  /**
+   * Reset the animation.
+   */
+  animation.reset = function() {
+    // Reset keyframes.
+    animation.p.v.s = animation.p.v.o.s;
+    animation.p.v.e = animation.p.v.o.e;
+    animation.p.v.c = animation.p.v.o.s;
+  };
+
+  return animation;
 }
 
 /**
@@ -359,12 +368,16 @@ function generateAnimations(elements, params) {
 /**
  * @typedef Instance
  * @type Object
+ * @property {Number} id The instance id.
  * @property {Number} duration The computed instance duration time.
+ * @property {Boolean} paused
+ * @property {Boolean} completed
  * @property {Function} play Play the instance animations.
  * @property {Function} pause Pause the instance animations.
  * @property {Function} _t
  */
 
+var instanceId = 0;
 /**
  * Creates a new animations manager instance.
  *
@@ -383,6 +396,7 @@ function createNewInstance(parameters) {
   var animations = generateAnimations(elements, params);
 
   return {
+    id: instanceId++,
     a: animations.l,
     // Variables.
     v: {
@@ -395,6 +409,7 @@ function createNewInstance(parameters) {
     time: {
       s: null, // Start
       e: 0, // Elapsed
+      l: 0, // Last elapsed
       p: 0, // Progress
       t: animations.d // Total
     }
@@ -407,8 +422,29 @@ function createNewInstance(parameters) {
 var instances = [];
 /** @var {Instance[]} */
 var runningInstances = [];
+var runningInstancesLength = 0;
 var raf;
 
+/**
+ * Add an instance to running list
+ * @param {Instance} instance
+ */
+function addInstanceToRunningList(instance) {
+  runningInstances.push(instance);
+  runningInstancesLength = runningInstances.length;
+}
+
+/**
+ * Remove an instance from the running list.
+ * @param {Instance|Number} instance
+ */
+function removeInstanceFromRunningList(instance) {
+  runningInstances.splice(instance, 1);
+  runningInstancesLength = runningInstances.length;
+}
+
+// Core
+// The Engine.
 var runLoop = (function() {
 
   function play() {
@@ -416,9 +452,20 @@ var runLoop = (function() {
   }
 
   function step() {
-    var runningInstancesLength = runningInstances.length;
     if (runningInstancesLength) {
-      for (var i=0; i<runningInstancesLength; i++) runningInstances[i]._t();
+      for (var i=0; i<runningInstancesLength; i++) {
+        /**
+         * Run the instance only when it is
+         * not paused and not completed.
+         * Else remove it from the running list.
+         */
+        var runningInstance = runningInstances[i];
+        if (!runningInstance.paused && !runningInstance.completed) {
+          runningInstance._t();
+        } else {
+          removeInstanceFromRunningList(i);
+        }
+      }
       play();
     } else {
       raf = cancelAnimationFrame(raf);
@@ -490,7 +537,8 @@ function animate(params) {
         var startValue = animation.p.v.s;
         var endValue = animation.p.v.e;
         animation.p.v.c = lerp(startValue, endValue, eased);
-        console.log(animation.p);
+        // Set animation value.
+        animation.el.style[animation.p.n] = animation.p.v.c;
       }
       i++;
     }
@@ -502,7 +550,31 @@ function animate(params) {
   function resetTime() {
     instance.time.s = null;
     instance.time.e = 0;
+    instance.time.l = 0;
     instance.time.p = 0;
+  }
+
+  /**
+   * Freeze the animation time.
+   */
+  function freezeTime() {
+    instance.time.s = null;
+    instance.time.l = instance.time.e;
+  }
+
+  /**
+   * Compute and return the elapsed time.
+   * @returns {Number}
+   */
+  function getTheInstanceElapsedTime() {
+    // Get the last elapsed
+    // time (store when we pause the instance for example)
+    var lastElapsed = instance.time.l;
+    // Compute the current elapsed time.
+    var elapsed = performance.now() - instance.time.s;
+    // The new elapsed time is
+    // the accumulation of all the previous elapsed time.
+    return Number(lastElapsed + elapsed);
   }
 
   /**
@@ -512,22 +584,21 @@ function animate(params) {
   instance._t = function() {
     // 1. Calculate the progress.
     instance.time.s = (instance.time.s === null) ? performance.now() : instance.time.s;
-    instance.time.e = clamp(Number(performance.now() - instance.time.s), 0, instance.time.t);
+    instance.time.e = clamp(getTheInstanceElapsedTime(), 0, instance.time.t);
     instance.time.p = Number(instance.time.e / instance.time.t);
     var eased = parseEasing(instance.v.e)(instance.time.p);
-    var remainingTime = Number(instance.time.t - instance.time.e);
 
     // 2. Run all its animations.
     setAnimationsProgress(instance.time.e);
-    //instance.a.forEach(function(a){ console.log(a); });
 
     // 3. Call the update callback.
-    instance.v.update && instance.v.update(eased, remainingTime);
+    instance.v.update &&
+      instance.v.update(eased, instance.time.e, instance.time.t);
 
     // 4. Pause the instance when we've done.
     if (instance.time.p >= 1) {
-      runningInstances.splice(this, 1);
-      instance.reset();
+      instance.paused = true;
+      instance.completed = true;
       instance.v.cb && instance.v.cb();
     }
   };
@@ -536,29 +607,34 @@ function animate(params) {
     instance.paused = true;
     instance.completed = false;
     resetTime();
-    // TODO: Reset animation keyframes.
     // Reset animation keyframes.
+    var animations = instance.a;
+    var animationLength = animations.length;
+    for (var i=0; i<animationLength; i++) animations[i].reset();
   };
 
   instance.play = function() {
     if (!instance.paused) return;
     if (instance.completed) instance.reset();
     instance.paused = false;
-    runningInstances.push(instance);
+
+    addInstanceToRunningList(this);
     if (!raf) runLoop();
   };
 
+  /**
+   * Pause an instance.
+   * Typically we should freeze the time then
+   * we have to remove the instance from runningInstances list.
+   */
   instance.pause = function() {
     instance.paused = true;
-    // TODO: Reset time.
-    // Reset time.
+    freezeTime();
   };
 
   instance.reset();
-
   // Register the instance
   instances.push(instance);
-
   return instance;
 }
 

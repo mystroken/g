@@ -178,9 +178,9 @@ animate({
 
 Defines a callback invoked on every frame of the animation.
 
-| Default | Type     | Params                   |
-|:------- |:-------- | ------------------------ |
-| `null`  | Function | progress, remaining time |
+| Default | Type     | Params                                |
+|:------- |:-------- | ------------------------------------- |
+| `null`  | Function | progress, elapsed time, totalDuration |
 
 The callback takes as its argument the animation progress (between 0 and 1) and can be used on its own without being tied to `el`.
 
@@ -189,8 +189,8 @@ The callback takes as its argument the animation progress (between 0 and 1) and 
 animate({
   d: 5000,
   e: 'linear',
-  update: (progress, remaining) =>
-    console.log(`Remaining time before the end: ${remaining}`)
+  update: (progress, elapsed, duration) =>
+    console.log(`Remaining time before the end: ${duration - elapsed}`)
     document.body.textContent = `${Math.round(progress * 100)}%`
 });
 ```

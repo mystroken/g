@@ -19,6 +19,7 @@
     "dist",
     "**.js"
   ],
+  "jest": {},
   "keywords": [
     "javascript",
     "libray",
