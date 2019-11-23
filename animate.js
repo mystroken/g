@@ -313,13 +313,11 @@ function getElementTransformValue(element, propertyKey) {
  * @returns {Number}
  */
 function getElementPropertyValue(element, animationType, propertyKey) {
-  if (animationType === 'transform')
-    return getElementTransformValue(element, propertyKey);
-  const value =
-    element.style[propertyKey] ||
-    element[propertyKey] ||
-    getComputedStyle(element).getPropertyValue(propertyKey);
-  return Number(value);
+  switch (animationType) {
+    case "transform": return getElementTransformValue(element, propertyKey);
+    case "object": return element[propertyKey] || 0;
+    default: return Number(element.style[propertyKey] || getComputedStyle(element).getPropertyValue(propertyKey));
+  }
 }
 
 /**
