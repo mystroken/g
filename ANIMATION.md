@@ -63,8 +63,8 @@ For performance purposes, you can only animate the opacity and css transformatio
     opacity: [0, 1],
     // You can pass the unit as
     // third element of the Array.
-    x: [0, 100, 'px'],
     // For x & y, default unit is '%'
+    x: [0, 100, 'px'],
     y: [10, 100],
     scale: [1, 1.5],
     scaleX: [0, 1],
@@ -72,7 +72,10 @@ For performance purposes, you can only animate the opacity and css transformatio
     // Default unit for rotation is 'deg'
     rotate: [0, 360],
     rotateX: [0, 1, 'turn'],
-    rotateY: [-90, 180],
+    // Or simply past a string with unit as end
+    // value, the start value will be
+    // calculated (less optimized)
+    rotateY: "2turn",
 }
 ```
 
@@ -82,7 +85,7 @@ Determines the acceleration curve of your animation (the easing).
 
 | Default | Type               |
 |:------- |:------------------ |
-| `io2`   | String \| Function |
+| `io4`   | String \| Function |
 
 Except the `linear` easing, all the available easings are composed as follows:
 

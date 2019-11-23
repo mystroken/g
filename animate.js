@@ -1,122 +1,213 @@
-/*
-
-
-──────────────────────────────────────────
-──────────────────────────────────────────
-Animate
-──────────────────────────────────────────
-──────────────────────────────────────────
-
-OBJECT
-──────
-
-elements            elements
-properties          properties
-duration            duration
-easing              easing
-delay               delay
-callback            callback to call at the end.
-update              custom function called on each frame
-loop  #wip
-speed #wip
-reverse #wip
-
-PROPERTIES
-──────────
-
-x                   transform3d → {x: [start, end, unit]} → unit: 'px' for pixel || % if not declared
-y
-rotate
-rotateX
-rotateY
-scale
-scaleX
-scaleY
-opacity
-
-EXAMPLE
-───────────────────
-
-this.anim = new Animate({el: '#id', p: {x: [0, 600, 'px']}, d: 2000, e: 'o4'})
-this.anim.play()
-
-*/
-'use strict';
-
-import bindAll from './bindAll';
 import clamp from './clamp';
-import Delay from './Delay';
 import Ease from './Ease';
 import lerp from './lerp';
-import Raf from './Raf';
 import round from './round';
 
 /**
- * Returns true if it is a DOM node.
- *
- * Result of:
- * querySelector()
- * getElementById()
- *
- * @param {*} o
+ * @typedef InstanceParams
+ * @type Object
+ * @property {HTMLElement|String|Array} el Determines the elements to animate.
+ * @property {Object} p Define element properties to animate.
+ * @property {Number|Function} d Determine the duration of each animation.
+ * @property {Number|Function} delay Determine the delay of each animation.
+ * @property {String|Function} e Determine the ease of animations.
+ * @property {Function|null} update Set the callback to call on each frame during animations.
+ * @property {Function|null} cb Set the callback to call when animations are done.
  */
-function isN(o) {
-  return o instanceof HTMLElement;
+/** @var {InstanceParams} defaultParams */
+var defaultParams = {
+  d: 1000,
+  e: "io4",
+  delay: 0,
+  update: null,
+  cb: null
+};
+
+// Object helpers
+
+/**
+ * Clone an object.
+ * @param {Object} o
+ * @returns {Object}
+ */
+function clone(o) {
+  var clone = {};
+  for (var p in o) clone[p] = o[p];
+  return clone;
 }
 
 /**
- * Returns true if it's a DOM node list.
- *
- * Result of:
- * querySelectorAll()
- * getElementsByClassName()
- * getElementsByTagName()
- *
- * @param {*} o
+ * Extends an object.
+ * @param {Object} o1
+ * @param {Object} o2
+ * @returns {Object}
  */
-function isNL(o) {
-  return o instanceof NodeList || o instanceof HTMLCollection;
+function extend(o1, o2) {
+  var o = clone(o1);
+  for (var p in o2) o[p] = o2.hasOwnProperty(p) ? o2[p] : o1[p];
+  return o;
 }
 
 /**
- * getElements
- *
- * Select one or many dom elements
+ * Check if an element is contained inside a given array.
+ * @param {Array} anArray
+ * @param {*} element
+ * @returns {boolean}
+ */
+function arrayContains(anArray, element) {
+  if (Array.isArray(anArray)) {
+    var i = 0;
+    var arrayLength = anArray.length;
+    while (i < arrayLength) {
+      if (element === anArray[i++])
+        return true;
+    }
+  }
+  return false;
+}
+
+// DOM Helper
+/**
+ * Check if the passed element is a DOM element
+ * @param {Object|HTMLElement|HTMLCollection|NodeList|String} element
+ * @returns {boolean}
+ */
+function isDOM(element) {
+  return element instanceof HTMLElement;
+}
+
+/**
+ * Check if the passed elements is a collection of DOM Elements.
+ * @param {Object|HTMLElement|HTMLCollection|NodeList|String} element
+ * @returns {boolean}
+ */
+function isDOMList(element) {
+  return (
+    element instanceof NodeList ||
+    element instanceof HTMLCollection
+  );
+}
+
+/**
+ * Select one or many dom elements (or object)
  * by passing string or their reference
- * and returns an array of dom elements.
+ * and returns an array of these ones.
  *
  * @param {Array|HTMLElement|NodeList|HTMLCollection|string} elements
- * @returns {Array|object}
+ * @returns {Array}
  * @see https://developer.mozilla.org/en/docs/Web/API/Element
  */
-function g(elements) {
-  if (typeof elements === 'string') return Array.from( document.querySelectorAll(elements) );
-  if (isN(elements)) return [elements];
-  if (isNL(elements)) return Array.from(elements);
-  if (Array.isArray(elements)) return elements;
+function selectElements(elements) {
+  if (isDOM(elements))
+    return [elements];
+  if (isDOMList(elements))
+    return Array.from(elements);
+  if (Array.isArray(elements))
+    return elements;
+  if (typeof elements === "string")
+    return Array.from(document.querySelectorAll(elements));
 
   return [elements];
 }
 
 /**
  * Returns a number corresponding to an index.
- * @param {number|function} n The stagger amount.
- * @param {number} i The index in the iterable.
- * @returns {number} The index's value.
+ * @param {Number|Function} n The stagger amount.
+ * @param {Number} i The index in the iterable.
+ * @returns {Number} The index's value.
  */
-function stagger(n, i) {
-  if (typeof n === 'function') return n(i);
-  return n;
+function getStaggerValue(n, i) {
+  return (typeof n === "function") ? n(i) : n;
 }
 
 /**
- * Create keyframes from properties.
- * @param {object} properties The animation properties.
+ * Parse the easing and return a
+ * function to compute a number according to this easing.
+ *
+ * @param {String|Function} parameter
+ * @returns {Function}
+ * @example
+ * var eased = parseEasing(parameter)(value);
  */
-function createAnimationKeyframes(properties) {
+function parseEasing(parameter) {
+  return (typeof parameter === 'string') ? Ease[parameter] : parameter;
+}
 
-  var keyframes = {};
+/**
+ * Retrieves value and unit from a given string property.
+ * @param {String} property
+ * @returns {[Number|null, String|null]}
+ */
+function parseStringProperty(property) {
+  var value = null;
+  var unit = null;
+  property = "" + property;
 
+  // Select value.
+  var valueMatches = property.match(/[^a-zA-Z]+/g);
+  if (valueMatches) value = valueMatches[0];
+  // Select unit.
+  var unitMatches = property.match(/[a-zA-Z]+/g);
+  if (unitMatches) unit = unitMatches[0];
+
+  return [value, unit];
+}
+
+/**
+ * If the passed unit is defined, returns it
+ * Else try to return a default unit according to passed property.
+ * @param {String} propertyKey
+ * @param {undefined|String} unit
+ * @returns {null|String}
+ */
+function getPropertyUnit(propertyKey, unit) {
+  if (unit) return unit;
+  switch (propertyKey) {
+    case 'translateX':
+    case 'translateY':
+    case 'translateZ':
+      return '%';
+    case 'rotate':
+    case 'rotateX':
+    case 'rotateY':
+    case 'rotateZ':
+      return 'deg';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Parses given properties.
+ *
+ * Each property is about the start and
+ * the end value.
+ *
+ * We've three ways to create a property
+ *  1. By passing an array —> x: [0, 10, 'unit']
+ *  2. By passing a string –> y: '100px'
+ *  3. By passing a number -> scale: 1
+ *
+ *  At the end, we need to find properties to this form:
+ *  {
+ *    x: {
+ *      s: 0,
+ *      e: 100,
+ *      c: 0,
+ *      o: {
+ *        s: 0,
+ *        e: 100
+ *      }
+ *    }
+ *  }
+ *
+ * @param {Object} p properties to parse.
+ * @returns {Object} A parsed form of animatable properties.
+ */
+function parseProperties(p) {
+  var properties = clone(p);
+
+  // Transform some properties if needed.
   if (properties.scale) {
     properties.scaleX = properties.scale;
     properties.scaleY = properties.scale;
@@ -129,401 +220,566 @@ function createAnimationKeyframes(properties) {
     delete properties.rotate;
   }
 
-  Object.keys(properties).forEach(function(key) {
+  if (properties.x) {
+    properties.translateX = properties.x;
+    delete properties.x;
+  }
 
-    keyframes[key] = {
-      s: properties[key][0], // Start value.
-      e: properties[key][1], // End value.
-      c: properties[key][0], // Current value.
-      // Original start and end.
+  if (properties.y) {
+    properties.translateX = properties.x;
+    delete properties.y;
+  }
+
+  if (properties.z) {
+    properties.translateZ = properties.z;
+    delete properties.z;
+  }
+
+  Object.keys(properties).forEach(function(key){
+    var property = properties[key];
+    var isPropertyArray = Array.isArray(property);
+    var parsedStringProperty = parseStringProperty(property);
+
+    // Retrieve the start and the end value.
+    var start = isPropertyArray ? Number(property[0]) : null;
+    var end = isPropertyArray
+      ? Number(property[1])
+      : typeof property === "string"
+        ? Number(parsedStringProperty[0])
+        : !isNaN(property)
+          ? Number(property)
+          : null;
+
+    // Retrieve the unit of the value (if needed).
+    var unit = isPropertyArray
+      ? getPropertyUnit(key, property[2])
+      : typeof property === "string"
+        ? parsedStringProperty[1]
+        : getPropertyUnit(key);
+
+    properties[key] = {
+      s: start,
+      c: start,
+      e: end,
+      u: unit,
       o: {
-        s: properties[key][0],
-        e: properties[key][1],
-      },
+        s: start,
+        e: end
+      }
     };
-
-    // Set property unit.
-    if (key !== 'scale' && key !== 'opacity')
-      keyframes[key]['u'] =
-        (typeof properties[key][2] !== 'undefined')
-          ? properties[key][2]
-          : (key === 'x' || key === 'y')
-            ? '%'
-            : 'deg';
   });
 
-  return keyframes;
+  return properties;
 }
 
 /**
- * Queue data type.
- * @constructor
+ * Returns the transform value of an element.
+ * @param {HTMLElement|Object} element The animatable element.
+ * @param {String} propertyKey The key name of the property to animate.
+ * @returns {Number}
  */
-function L() {
-  /**
-   * Queue of all animations.
-   * @type {Array}
-   */
-  this.all = [];
+function getElementTransformValue(element, propertyKey) {
 
-  /**
-   * Queue length.
-   * @type {number}
-   */
-  this.L = 0;
+  // Typically here I've to try reading
+  // the value from the style attribute first,
+  // if there is no value there, I can call the getComputedStyle then :'(
+  var transformationStyleString = element.style.transform;
+  if (!transformationStyleString) {
+    // It seems like getComputedStyle returns
+    // either the string "none"
+    // or the computed transformation in the form of a matrix.
+    //var computedTransformValue = getComputedStyle(element).getPropertyValue("transform");
+    if (arrayContains(["scale", "scaleX", "scaleY"], propertyKey)) return 1;
+  } else {
+    // We're reading value from element style attribute.
+    // If we found the property inside the string, we get value.
+    // EDIT: (Ignore) Else, we try to look for the group property and we remove the value there.
+    // Else, we're definitely sure that the value is not set and we return 0.
+    var values = transformationStyleString.match(new RegExp(propertyKey + "\(([^)]+)\)"));
+    return Array.isArray(values) && values[1]
+      ? parseStringProperty(values[1].substr(1))[0]
+      : arrayContains(["scale", "scaleX", "scaleY"], propertyKey) ? 1 : 0;
+  }
+
+  return 0;
 }
 
-L.prototype = {
-
-  /**
-   * Add a new animation to the queue.
-   * @param {object} a An animation options.
-   * @returns {L}
-   */
-  a: function(a) {
-    this.all.push(a);
-    this.L = this.all.length;
-    return this;
-  },
-
-  /**
-   * Remove all items from the queue.
-   * @returns {L}
-   */
-  c: function() {
-    this.all.length = 0;
-    this.L = 0;
-    return this;
-  },
-
-  /**
-   * Remove an animation from the queue.
-   * @param {object} a An animation options.
-   * @returns {L}
-   */
-  d: function(a) {
-    this.all.splice(a, 1);
-    this.L = this.all.length;
-    return this;
-  },
-};
+/**
+ * Get the current
+ * value of the animation property
+ * @param {HTMLElement|Object} element The animatable element.
+ * @param {String} animationType The animation type.
+ * @param {String} propertyKey The key name of the property to animate.
+ * @returns {Number}
+ */
+function getElementPropertyValue(element, animationType, propertyKey) {
+  if (animationType === 'transform')
+    return getElementTransformValue(element, propertyKey);
+  const value =
+    element.style[propertyKey] ||
+    element[propertyKey] ||
+    getComputedStyle(element).getPropertyValue(propertyKey);
+  return Number(value);
+}
 
 /**
- * Each element is animated
- * individually
+ * Set a value to the transformation property.
+ * @param {HTMLElement|Object} element The animatable element.
+ * @param {String} propertyKey The property to set the value.
+ * @param {String} value The value to set.
+ */
+function setElementTransformValue(element, propertyKey, value) {
+  // We're trying to do a transformation.
+  // First of all, we should take the current transformation string.
+  // If the current transformation property key already exist in the string, we just have to replace its value.
+  // Else we create a new string and we add it in the transformation string.
+  var transformationString = element.style.transform;
+  element.style.transform =
+    transformationString.indexOf(propertyKey) !== -1
+      ? transformationString.replace(new RegExp(propertyKey + "\(([^)]+)\)"), propertyKey + "("+value)
+      : transformationString + " " + propertyKey + "("+value+")"
+  ;
+}
+
+/**
+ * Set animatable element a value.
+ * @param {HTMLElement|Object} element The animatable element.
+ * @param {String} animationType The animation type.
+ * @param {String} propertyKey The property to set the value.
+ * @param {String} value The value to set.
+ * @param {String} unit The unit of the property.
+ */
+function setElementValue(element, animationType, propertyKey, value, unit) {
+  switch (animationType) {
+    case "object": element[propertyKey] = value;break;
+    case "opacity": element.style["opacity"] = value;break;
+    case "transform":
+      var transformValue = unit ? value+""+unit : value;
+      setElementTransformValue(element, propertyKey, transformValue);
+      break;
+  }
+}
+
+/**
+ * Detect the animation type from
+ * the animatable property key
  *
- * @constructor
+ * There are three types of animations
+ * 'transform', 'opacity', 'object'
+ *
+ * @param {String} key The property key.
+ * @returns {String}
  */
-function AnimationEntry(o) {
-  bindAll(this, ['_run', '_tick']);
-
-  // Keep variables.
-  this._v = o;
-
-  // The elapsed time since the beginning.
-  this._e = 0;
-
-  // The progress of the animation.
-  this._p = 0;
-
-  // The loop function.
-  this._raf = new Raf(this._tick);
-
-  // Schedule the animation according to the delay.
-  this._delay = new Delay(this._run, o.delay);
+function getAnimationType(key) {
+  switch (key) {
+    case 'x':
+    case 'y':
+    case 'translateX':
+    case 'translateY':
+    case 'translateZ':
+    case 'scale':
+    case 'scaleX':
+    case 'scaleY':
+    case 'scaleZ':
+    case 'skew':
+    case 'skewX':
+    case 'skewY':
+    case 'skewZ':
+    case 'rotate':
+    case 'rotateX':
+    case 'rotateY':
+    case 'rotateZ':
+      return 'transform';
+    case 'opacity':
+      return 'opacity';
+    default:
+      return 'object';
+  }
 }
 
-AnimationEntry.prototype = {
+/**
+ * @typedef AnimatableProperty
+ * @type Object
+ * @property {String} n The property name.
+ * @property {{
+ *   s: Number,
+ *   c: Number,
+ *   e: Number,
+ *   o: {s:Number, e:Number}
+ * }} v The property values.
+ */
+
+/**
+ * @typedef {InstanceParams} AnimationParams
+ * @property {String} type The animation type.
+ */
+
+/**
+ * @typedef AnimationInstance
+ * @type Object
+ * @property {HTMLElement|Object} el The animatable object.
+ * @property {String} type The animation type.
+ * @property {AnimatableProperty} p Property to animate.
+ * @property {{e: String, d: Number, D: Number}} v Animation variables.
+ */
+
+/**
+ * Create a new animation instance.
+ *
+ * An animation is responsible of animating
+ * the value of one property of a given element.
+ * @param {AnimationParams} params
+ * @returns {AnimationInstance}
+ */
+function createNewAnimation(params) {
+  var animation = {
+    el: params.el,
+    type: params.type,
+    p: params.p,
+    v: {
+      e: params.e,
+      d: params.d,
+      D: params.delay
+    }
+  };
 
   /**
-   * Run the animation.
+   * Reset the animation.
    */
-  play: function() {
-    this._delay.run();
-  },
+  animation.reset = function() {
+    // Reset keyframes.
+    animation.p.v.s = animation.p.v.o.s;
+    animation.p.v.e = animation.p.v.o.e;
+    animation.p.v.c = animation.p.v.o.s;
+  };
 
-  /**
-   * Pause the animation.
-   */
-  pause: function() {
-    this._raf.stop();
-    if (this._delay) this._delay.stop();
-  },
+  return animation;
+}
 
-  /**
-   * Compute the linear interpolation.
-   *
-   * @param {Number} s
-   * @param {Number} e
-   * @returns {number}
-   * @private
-   */
-  _li: function(s, e) {
-    var ease = (typeof this._v.e === 'string') ? Ease[this._v.e](this._p) : this._v.e(this._p);
-    return round(lerp(s, e, ease), 2);
-  },
+/**
+ * Returns an array of animations according
+ * to the number of animatable elements and their properties.
+ *
+ * First of all, we should select and parse properties.
+ * Then for each property, we should create an animation instance.
+ *
+ * @param {Array} elements animatable elements.
+ * @param {InstanceParams} params
+ * @returns {{l: AnimationInstance[], d: Number}}
+ */
+function generateAnimations(elements, params) {
+  // Since each instance allows to set only the
+  // same properties for all selected elements, that
+  // means that we can parse properties first
+  // before looping through elements.
+  var properties = parseProperties(params.p);
+  var animations = [];
+  var instanceDuration = 0;
+  elements.forEach(function(element, index) {
+    // For each property of each element,
+    // we create an animation.
+    // EDIT: For more control, I need to group transformation animations into one animation.
+    // But first, let us compute the
+    // duration of the instance.
+    var animationDuration = getStaggerValue(params.d, index);
+    var animationDelay = getStaggerValue(params.delay, index);
+    var animationTotalDuration = animationDelay + animationDuration;
+    instanceDuration =
+      animationTotalDuration > instanceDuration
+      ? animationTotalDuration
+      : instanceDuration;
+    Object.keys(properties).forEach(function (key) {
+      var property = { n: key, v: properties[key] };
+      // Get the animation type.
+      var animationType = getAnimationType(key);
+      var parameters = extend(params, {
+        el: element,
+        type: animationType,
+        p: property,
+        d: animationDuration,
+        delay: animationDelay
+      });
+      animations.push(createNewAnimation(parameters));
+    });
+  });
 
-  /**
-   * Run the requestAnimationFrame API.
-   * @private
-   */
-  _run: function() {
-    this._raf.run();
-  },
+  return {
+    l: animations,
+    d: instanceDuration
+  };
+}
 
-  /**
-   * Create stylesheet from keyframes.
-   * @returns {{transform: string, opacity: string}}
-   * @private
-   */
-  _style: function() {
-    var
-      k = this._v.k,
-      s = {
-      transform: '',
-      opacity: '',
-    };
+/**
+ * @typedef Instance
+ * @type Object
+ * @property {Number} id The instance id.
+ * @property {Number} duration The computed instance duration time.
+ * @property {Boolean} paused
+ * @property {Boolean} completed
+ * @property {Function} play Play the instance animations.
+ * @property {Function} pause Pause the instance animations.
+ * @property {Function} _t
+ */
 
-    if (k.x || k.y) {
+var instanceId = 0;
+/**
+ * Creates a new animations manager instance.
+ *
+ * An animation manager runs many animations
+ * according to the number of selected elements
+ * and its animatable properties.
+ *
+ * Typically we should retrieve animatable elements first,
+ * Then for each animatable and for each property, we create an animation instance.
+ * @param {InstanceParams} parameters
+ * @returns {Instance}
+ */
+function createNewInstance(parameters) {
+  var params = extend(defaultParams, parameters);
+  var elements = selectElements(params.el);
+  var animations = generateAnimations(elements, params);
 
-      var currentX = k.x ? this._li(k.x.s, k.x.e) : 0;
-      var currentY = k.y ? this._li(k.y.s, k.y.e) : 0;
-      var unit = k.x ? k.x.u : k.y.u;
-
-      s.transform += 'translate3d('+ currentX +''+ unit +', '+ currentY +''+ unit +', 0) ';
+  return {
+    id: instanceId++,
+    a: animations.l,
+    // Variables.
+    v: {
+      e: params.e,
+      el: elements,
+      cb: params.cb,
+      update: params.update
+    },
+    // Time variables.
+    time: {
+      s: null, // Start
+      e: 0, // Elapsed
+      l: 0, // Last elapsed
+      p: 0, // Progress
+      t: animations.d // Total
     }
+  };
+}
 
-    if (k.scaleX) {
-      k.scaleX.c = this._li(k.scaleX.s, k.scaleX.e);
-      s.transform += 'scaleX('+ k.scaleX.c +') ';
-    }
+// Core
 
-    if (k.scaleY) {
-      k.scaleY.c = this._li(k.scaleY.s, k.scaleY.e);
-      s.transform += 'scaleY('+ k.scaleY.c +') ';
-    }
+/** @var {Instance[]} */
+var instances = [];
+/** @var {Instance[]} */
+var runningInstances = [];
+var runningInstancesLength = 0;
+var raf;
 
-    if (k.rotateX) {
-      k.rotateX.c = this._li(k.rotateX.s, k.rotateX.e);
-      s.transform += 'rotateX('+ k.rotateX.c +''+ k.rotateX.u +') ';
-    }
+/**
+ * Add an instance to running list
+ * @param {Instance} instance
+ */
+function addInstanceToRunningList(instance) {
+  runningInstances.push(instance);
+  runningInstancesLength = runningInstances.length;
+}
 
-    if (k.rotateY) {
-      k.rotateY.c = this._li(k.rotateY.s, k.rotateY.e);
-      s.transform += 'rotateY('+ k.rotateY.c +''+ k.rotateY.u +') ';
-    }
+/**
+ * Remove an instance from the running list.
+ * @param {Instance|Number} instance
+ */
+function removeInstanceFromRunningList(instance) {
+  runningInstances.splice(instance, 1);
+  runningInstancesLength = runningInstances.length;
+}
 
-    if (k.opacity) {
-      k.opacity.c = this._li(k.opacity.s, k.opacity.e);
-      s.opacity = k.opacity.c;
-    }
+// Core
+// The Engine.
+var runLoop = (function() {
 
-    return s;
-  },
+  function play() {
+    raf = requestAnimationFrame(step);
+  }
 
-  /**
-   *
-   * @param {number} elapsed The elapsed time.
-   * @private
-   */
-  _tick: function(elapsed) {
-
-    // 1. Calculate the progress
-    this._e = clamp(elapsed, 0, this._v.d);
-    this._p = clamp(this._e / this._v.d, 0, 1);
-
-    // 2. Apply the ease.
-    // this.pE = easing(this.p);
-
-    // 3. Compute values of
-    // animated properties
-
-
-    // 4. Update these properties
-    if (this._v.el) {
-      // DOM
-      if (this._v.type === Animate.TARGET_TYPE.DOM) {
-        var s = this._style();
-        if (s.transform) this._v.el.style.transform = s.transform;
-        if (s.opacity) this._v.el.style.opacity = s.opacity;
-      }
-      // OBJECT
-      else if (this._v.type === Animate.TARGET_TYPE.OBJECT) {
-        for (var i in this._v.k) {
-          if (this._v.el.hasOwnProperty(i)) {
-            this._v.el[i] = this._li(this._v.k[i].s, this._v.k[i].e);
-          }
+  function step() {
+    if (runningInstancesLength) {
+      for (var i=0; i<runningInstancesLength; i++) {
+        /**
+         * Run the instance only when it is
+         * not paused and not completed.
+         * Else remove it from the running list.
+         */
+        var runningInstance = runningInstances[i];
+        if (!runningInstance.paused && !runningInstance.completed) {
+          runningInstance._t();
+        } else {
+          removeInstanceFromRunningList(i);
         }
       }
+      play();
+    } else {
+      raf = cancelAnimationFrame(raf);
     }
+  }
 
-    // 5. Call the update callback
-    // by passing the progress as argument
-    if (this._v.update) {
-      this._v.update(this._p);
-    }
-
-    // 6. Break the loop if the
-    // animation is complete (progress = 1)
-    if (this._p === 1) {
-      this.pause();
-      if (this._v.cb) this._v.cb();
-    }
-  },
-};
-
-
+  return play;
+})();
 
 /**
- * Animation manager
+ * Creates a new instance.
  *
- * Split create many animation
- * entries for each animatable.
- *
- * @param {object} o
- * @constructor
+ * Each instance generates animations
+ * and knows all about them.
+ * @param {InstanceParams} params
+ * @returns {Instance}
  */
-function Animate(o) {
-  // Bind methods
-  // bindAll(this, ['_run', '_tick']);
+function animate(params) {
+  var instance = createNewInstance(params);
 
   /**
-   * Register all animation into a stack.
-   * @type {L}
-   * @private
+   * Attach the duration property that
+   * exposes the real duration of the instance.
+   * var totalDuration = instance.duration;
    */
-  this._L = new L();
+  Object.defineProperty(instance,
+    'duration', {
+    get: function () {
+      return instance.time.t
+    }
+  });
 
   /**
-   * The elapsed time since the beginning.
-   * @type {number}
-   * @private
+   * Set Animations Progress
+   * For each animation of the instance, calculate the
+   * progress then set the progress value.
+   * @param {Number} time The instance time.
    */
-  this._e = 0;
+  function setAnimationsProgress(time) {
+    var i = 0;
+    var animations = instance.a;
+    var animationsLength = animations.length;
+    while(i < animationsLength) {
+      /** @type {AnimationInstance} */
+      var animation = animations[i];
+      var delay = animation.v.D;
+      var duration = animation.v.d;
+      var easing = animation.v.e;
+      var startTime = delay;
+      var stopTime = delay + duration;
+      // Start the computation only
+      // after the delay
+      if (time >= startTime && time <= stopTime) {
+        var elapsed = clamp(Number(time - startTime), 0, duration);
+        var progress = Number(elapsed / duration).toFixed(4);
+        var eased = parseEasing(easing)(progress);
+        // Compute the property current value
+        // from the progress by using the start and the end values.
+        // If the start value is null, that means that we've to retrieve it
+        // from CSS.
+        animation.p.v.s =
+          animation.p.v.s !== null
+            ? Number(animation.p.v.s)
+            : getElementPropertyValue(
+              animation.el,
+              animation.type,
+              animation.p.n
+            );
+        var startValue = animation.p.v.s;
+        var endValue = animation.p.v.e;
+        animation.p.v.c = round(lerp(startValue, endValue, eased), 4);
+        // Set animation value.
+        setElementValue(animation.el, animation.type, animation.p.n, animation.p.v.c, animation.p.v.u);
+      }
+      i++;
+    }
+  }
 
   /**
-   * The progress of the animation.
-   * @type {number}
-   * @private
+   * Reset the instance time.
    */
-  this._p = 0;
+  function resetTime() {
+    instance.time.s = null;
+    instance.time.e = 0;
+    instance.time.l = 0;
+    instance.time.p = 0;
+  }
 
   /**
-   * The loop function.
-   * @type {Raf}
-   * @private
+   * Freeze the animation time.
    */
-  this._raf = new Raf(this._tick);
+  function freezeTime() {
+    instance.time.s = null;
+    instance.time.l = instance.time.e;
+  }
 
   /**
-   * Schedule the animation according to the delay.
-   * @type {Delay}
-   * @private
+   * Compute and return the elapsed time.
+   * @returns {Number}
    */
-  this._delay = new Delay(this._run, o.delay);
+  function getTheInstanceElapsedTime() {
+    // Get the last elapsed
+    // time (store when we pause the instance for example)
+    var lastElapsed = instance.time.l;
+    // Compute the current elapsed time.
+    var elapsed = performance.now() - instance.time.s;
+    // The new elapsed time is
+    // the accumulation of all the previous elapsed time.
+    return Number(lastElapsed + elapsed);
+  }
 
   /**
-   * Variables.
-   * @type {*|{p: *, delay: (*|number), d: (*|number), e: (*|string), el: *, update: (*|boolean), cb: (*|boolean)}}
+   * Tick
    * @private
    */
-  this._v = this._init(o);
+  instance._t = function() {
+    // 1. Calculate the progress.
+    instance.time.s = (instance.time.s === null) ? performance.now() : instance.time.s;
+    instance.time.e = clamp(getTheInstanceElapsedTime(), 0, instance.time.t);
+    instance.time.p = Number(instance.time.e / instance.time.t);
+    var eased = parseEasing(instance.v.e)(instance.time.p);
+
+    // 2. Run all its animations.
+    setAnimationsProgress(instance.time.e);
+
+    // 3. Call the update callback.
+    instance.v.update &&
+      instance.v.update(eased, instance.time.e, instance.time.t);
+
+    // 4. Pause the instance when we've done.
+    if (instance.time.p >= 1) {
+      instance.paused = true;
+      instance.completed = true;
+      instance.v.cb && instance.v.cb();
+    }
+  };
+
+  instance.reset = function() {
+    instance.paused = true;
+    instance.completed = false;
+    resetTime();
+    // Reset animation keyframes.
+    var animations = instance.a;
+    var animationLength = animations.length;
+    for (var i=0; i<animationLength; i++) animations[i].reset();
+  };
+
+  instance.play = function() {
+    if (!instance.paused) return;
+    if (instance.completed) instance.reset();
+    instance.paused = false;
+
+    addInstanceToRunningList(this);
+    if (!raf) runLoop();
+  };
+
+  /**
+   * Pause an instance.
+   * Typically we should freeze the time then
+   * we have to remove the instance from runningInstances list.
+   */
+  instance.pause = function() {
+    instance.paused = true;
+    freezeTime();
+  };
+
+  instance.reset();
+  // Register the instance
+  instances.push(instance);
+  return instance;
 }
 
-
-/**
- * Animation type
- *
- * Since we can animation dom element
- * and javascript object, we need
- * to know what type of object
- * we're going to animate.
- *
- * @type {{DOM: number, OBJECT: number}}
- */
-Animate.TARGET_TYPE = {
-  DOM: 0,
-  OBJECT: 1
-};
-
-
-Animate.prototype = {
-  /**
-   * Play the animation.
-   */
-  play: function() {
-    var animations = this._L.all;
-    for (var i = 0; i < this._L.L; i++) animations[i].play();
-  },
-
-  /**
-   * Pause the animation.
-   */
-  pause: function() {
-    var animations = this._L.all;
-    for (var i = 0; i < this._L.L; i++) animations[i].pause();
-  },
-
-  /**
-   * Initialize Move variables.
-   * @param o
-   * @returns {{p: *, delay: (*|number), d: (*|number), e: (*|string), el: *, update: (*|boolean), cb: (*|boolean)}}
-   * @private
-   */
-  _init: function(o) {
-
-    var v = {
-      // Object or DOM elements to animate.
-      el: o.el,
-      // Elements properties to animate.
-      p: o.p,
-      // Duration of the animation in ms.
-      d: o.d || 1000,
-      // Easing of the animation.
-      e: o.e || 'io2',
-      // Delay before starting.
-      delay: o.delay || 0,
-      // Callback to call at the end of animation.
-      cb: o.cb || false,
-      // Callback to call on each animation's frame.
-      update: o.update || false,
-    };
-
-    // Get the array of elements
-    // to animate.
-    var elements = g(v.el);
-    var length = elements.length;
-
-    // For each element,
-    // instantiate a new animation entry.
-    for(var i = 0; i < length; i++) {
-
-      // Get the current element.
-      var el = elements[i];
-
-      // Extract keyframes.
-      var keyframes = createAnimationKeyframes(v.p);
-
-      // Add the animation entry
-      // into the queue.
-      this._L.a(
-        new AnimationEntry({
-          el: el,
-          d: stagger(v.d, i),
-          k: keyframes,
-          e: v.e,
-          type: isN(el) ? Animate.TARGET_TYPE.DOM : Animate.TARGET_TYPE.OBJECT,
-          delay: stagger(v.delay, i),
-          cb: v.cb,
-          update: v.update,
-        })
-      );
-
-    }
-
-    return v;
-  },
-
-};
-
-export default Animate;
+export default animate;
