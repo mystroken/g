@@ -1,4 +1,4 @@
-const round = require('../round');
+import round from '../round';
 
 test('should return expected round value', () => {
   expect(round(4.383, 1)).toBe(4.4);

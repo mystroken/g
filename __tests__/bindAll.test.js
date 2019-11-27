@@ -1,4 +1,4 @@
-const bindAll = require('../bindAll');
+import bindAll from '../bindAll';
 
 const MAX = 25;
 

@@ -1,4 +1,4 @@
-const Raf = require('../Raf');
+import Raf from '../Raf';
 
 test('Raf can run', (done) => {
   const raf = new Raf(() => done());

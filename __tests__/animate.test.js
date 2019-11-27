@@ -1,4 +1,4 @@
-const animate = require('../a');
+import animate from '../animate';
 
 test('Can animate object properties', (done) => {
   const counter = { value: 0 };
