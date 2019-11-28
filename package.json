@@ -1,6 +1,6 @@
 {
   "name": "@mystroken/g",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "A garden of small JavaScript utilities.",
   "main": "index.js",
   "author": "Mystro Ken <mystroken@gmail.com>",
@@ -8,8 +8,7 @@
   "scripts": {
     "test": "jest --coverage",
     "dev": "node scripts/dev/index.js",
-    "build": "node scripts/prod/index.js",
-    "publish": "npm run build && npm publish --access public"
+    "build": "node scripts/prod/index.js"
   },
   "homepage": "https://github.com/mystroken/g#readme",
   "repository": {

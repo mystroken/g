@@ -32,6 +32,8 @@ var Ease = {
   linear: function (t) {
     return t;
   },
+
+  // Sine (Sinusoidal)
   i1: function (t) {
     return -Math.cos(t * (Math.PI / 2)) + 1;
   },
@@ -41,6 +43,8 @@ var Ease = {
   io1: function (t) {
     return -0.5 * (Math.cos(Math.PI * t) - 1);
   },
+
+  // Quadratic (Quad)
   i2: function (t) {
     return t * t;
   },
@@ -50,6 +54,8 @@ var Ease = {
   io2: function (t) {
     return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
   },
+
+  // Cubic
   i3: function (t) {
     return t * t * t;
   },
@@ -59,6 +65,8 @@ var Ease = {
   io3: function (t) {
     return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
   },
+
+  // Quartic (Quart)
   i4: function (t) {
     return t * t * t * t;
   },
@@ -68,6 +76,8 @@ var Ease = {
   io4: function (t) {
     return t < 0.5 ? 8 * t * t * t * t : 1 - 8 * (--t) * t * t * t;
   },
+
+  // Quintic (Quint)
   i5: function (t) {
     return t * t * t * t * t;
   },
@@ -77,11 +87,15 @@ var Ease = {
   io5: function (t) {
     return t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * (--t) * t * t * t * t;
   },
+
+  // Exponential (Expo)
   i6: function (t) {
     return (t === 0) ? 0 : Math.pow(2, 10 * (t - 1));
   },
   o6: function (t) {
-    return (t === 1) ? 1 : 1 - Math.pow(2, -10 * t);
+    var OUT_EXPO_CORRECTION = 1.000976;
+    return (t === 1) ? 1 : 1 * OUT_EXPO_CORRECTION * (-Math.pow(2, -10 * t) + 1);
+    // return (t === 1) ? 1 : 1 - Math.pow(2, -10 * t);
   },
   io6: function (t) {
     if (t === 0) return 0;

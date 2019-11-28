@@ -1,5 +1,6 @@
 import clamp from './clamp';
 import Ease from './Ease';
+import forEachIn from './forEachIn';
 import lerp from './lerp';
 import round from './round';
 
@@ -208,34 +209,34 @@ function parseProperties(p) {
   var properties = clone(p);
 
   // Transform some properties if needed.
-  if (properties.scale) {
+  if (typeof properties.scale !== "undefined") {
     properties.scaleX = properties.scale;
     properties.scaleY = properties.scale;
     delete properties.scale;
   }
 
-  if (properties.rotate) {
+  if (typeof properties.rotate !== "undefined") {
     properties.rotateX = properties.rotate;
     properties.rotateY = properties.rotate;
     delete properties.rotate;
   }
 
-  if (properties.x) {
+  if (typeof properties.x !== "undefined") {
     properties.translateX = properties.x;
     delete properties.x;
   }
 
-  if (properties.y) {
-    properties.translateX = properties.x;
+  if (typeof properties.y !== "undefined") {
+    properties.translateY = properties.y;
     delete properties.y;
   }
 
-  if (properties.z) {
+  if (typeof properties.z !== "undefined") {
     properties.translateZ = properties.z;
     delete properties.z;
   }
 
-  Object.keys(properties).forEach(function(key){
+  forEachIn(Object.keys(properties))(function(key){
     var property = properties[key];
     var isPropertyArray = Array.isArray(property);
     var parsedStringProperty = parseStringProperty(property);
@@ -273,32 +274,67 @@ function parseProperties(p) {
 }
 
 /**
+ * Return a translation array from a
+ * string (retrieved from style for example)
+ * @param {String} transformationString
+ * @returns {[x: String, y: String, z: String]}
+ */
+function getTranslationArrayFromString(transformationString) {
+  var translationArray = ["0", "0", "0"];
+
+  if (transformationString.indexOf('translate3d') !== -1) {
+    var translation = transformationString.match(/translate3d\(([^)]+),([^)]+),([^)]+)\)/);
+    translationArray[0] = translation[1].trim();
+    translationArray[1] = translation[2].trim();
+    translationArray[2] = translation[3].trim();
+  }
+
+  return translationArray;
+}
+
+/**
  * Returns the transform value of an element.
+ * TODO: Convert units when reading values.
  * @param {HTMLElement|Object} element The animatable element.
  * @param {String} propertyKey The key name of the property to animate.
  * @returns {Number}
  */
 function getElementTransformValue(element, propertyKey) {
-
-  // Typically here I've to try reading
+  // Typically we've to try reading
   // the value from the style attribute first,
-  // if there is no value there, I can call the getComputedStyle then :'(
+  // if there is no value there, We should call the getComputedStyle then :'(
   var transformationStyleString = element.style.transform;
-  if (!transformationStyleString) {
-    // It seems like getComputedStyle returns
-    // either the string "none"
+  if (typeof transformationStyleString === "string" && transformationStyleString.length > 0) {
+    // We're reading value from element style attribute.
+    // If we found the property inside the string, we get value.
+
+    // If it is a translation, we'll
+    // retrieve the value from translate3d prop.
+    if (arrayContains(["translateX", "translateY", "translateZ"], propertyKey)) {
+      if (transformationStyleString.indexOf('translate3d') !== -1) {
+        var translationArray = getTranslationArrayFromString(transformationStyleString);
+        switch (propertyKey) {
+          case "translateX": return parseFloat(translationArray[0]);
+          case "translateY": return parseFloat(translationArray[1]);
+          case "translateZ": return parseFloat(translationArray[2]);
+          default: break;
+        }
+      }
+    }
+    else {
+      var values = transformationStyleString.match(new RegExp(propertyKey + "\(([^)]+)\)"));
+      return Array.isArray(values) && values[1]
+        ? parseStringProperty(values[1].substr(1))[0]
+        : arrayContains(["scale", "scaleX", "scaleY"], propertyKey) ? 1 : 0;
+    }
+  }
+
+  else {
+    // Let's call getComputedStyle.
+    // the function returns either the string "none"
     // or the computed transformation in the form of a matrix.
     //var computedTransformValue = getComputedStyle(element).getPropertyValue("transform");
     if (arrayContains(["scale", "scaleX", "scaleY"], propertyKey)) return 1;
-  } else {
-    // We're reading value from element style attribute.
-    // If we found the property inside the string, we get value.
-    // EDIT: (Ignore) Else, we try to look for the group property and we remove the value there.
-    // Else, we're definitely sure that the value is not set and we return 0.
-    var values = transformationStyleString.match(new RegExp(propertyKey + "\(([^)]+)\)"));
-    return Array.isArray(values) && values[1]
-      ? parseStringProperty(values[1].substr(1))[0]
-      : arrayContains(["scale", "scaleX", "scaleY"], propertyKey) ? 1 : 0;
   }
 
   return 0;
@@ -321,6 +357,23 @@ function getElementPropertyValue(element, animationType, propertyKey) {
 }
 
 /**
+ * Apply a translation to the element.
+ * @param {HTMLElement} element
+ * @param {String} transformationString
+ * @param {Array} translationArray
+ */
+function applyTheTranslationArray(element, transformationString, translationArray) {
+  var regex = /translate3d\(([^)]+)\)/;
+  var translationString = "translate3d("+translationArray[0]+","+translationArray[1]+","+translationArray[2]+")";
+
+  element.style.transform =
+    transformationString.indexOf('translate3d') !== -1
+      ? transformationString.replace(regex, translationString)
+      : transformationString + " " + translationString
+  ;
+}
+
+/**
  * Set a value to the transformation property.
  * @param {HTMLElement|Object} element The animatable element.
  * @param {String} propertyKey The property to set the value.
@@ -332,11 +385,30 @@ function setElementTransformValue(element, propertyKey, value) {
   // If the current transformation property key already exist in the string, we just have to replace its value.
   // Else we create a new string and we add it in the transformation string.
   var transformationString = element.style.transform;
-  element.style.transform =
-    transformationString.indexOf(propertyKey) !== -1
-      ? transformationString.replace(new RegExp(propertyKey + "\(([^)]+)\)"), propertyKey + "("+value)
-      : transformationString + " " + propertyKey + "("+value+")"
-  ;
+
+  // If we tryng to do a translation, use translate3d rather.
+  if (arrayContains(["translateX", "translateY", "translateZ"], propertyKey)) {
+    // Generate the translation array from the transformation string.
+    var translationArray = getTranslationArrayFromString(transformationString);
+    // Fill out the array with the current values.
+    switch (propertyKey) {
+      case "translateX": translationArray[0] = value; break;
+      case "translateY": translationArray[1] = value; break;
+      case "translateZ": translationArray[2] = value; break;
+      default: break;
+    }
+    // Apply the translation.
+    applyTheTranslationArray(element, transformationString, translationArray);
+  }
+
+  // We're trying to do other transformation than translation.
+  else {
+    element.style.transform =
+      transformationString.indexOf(propertyKey) !== -1
+        ? transformationString.replace(new RegExp(propertyKey + "\(([^)]+)\)"), propertyKey + "("+value)
+        : transformationString + " " + propertyKey + "("+value+")"
+    ;
+  }
 }
 
 /**
@@ -473,7 +545,7 @@ function generateAnimations(elements, params) {
   var properties = parseProperties(params.p);
   var animations = [];
   var instanceDuration = 0;
-  elements.forEach(function(element, index) {
+  forEachIn(elements)(function(element, index) {
     // For each property of each element,
     // we create an animation.
     // EDIT: For more control, I need to group transformation animations into one animation.
@@ -486,7 +558,7 @@ function generateAnimations(elements, params) {
       animationTotalDuration > instanceDuration
       ? animationTotalDuration
       : instanceDuration;
-    Object.keys(properties).forEach(function (key) {
+    forEachIn(Object.keys(properties))(function(key) {
       var property = { n: key, v: properties[key] };
       // Get the animation type.
       var animationType = getAnimationType(key);
@@ -647,12 +719,7 @@ function animate(params) {
    * @param {Number} time The instance time.
    */
   function setAnimationsProgress(time) {
-    var i = 0;
-    var animations = instance.a;
-    var animationsLength = animations.length;
-    while(i < animationsLength) {
-      /** @type {AnimationInstance} */
-      var animation = animations[i];
+    forEachIn(instance.a)(function(animation) {
       var delay = animation.v.D;
       var duration = animation.v.d;
       var easing = animation.v.e;
@@ -678,12 +745,11 @@ function animate(params) {
             );
         var startValue = animation.p.v.s;
         var endValue = animation.p.v.e;
-        animation.p.v.c = round(lerp(startValue, endValue, eased), 4);
+        animation.p.v.c = round(lerp(startValue, endValue, eased), 3);
         // Set animation value.
         setElementValue(animation.el, animation.type, animation.p.n, animation.p.v.c, animation.p.v.u);
       }
-      i++;
-    }
+    });
   }
 
   /**

@@ -6,7 +6,7 @@
 function forEachIn(arr) {
   var arrLength = arr.length;
   return function(fn) {
-    for (var i = 0; i < arrLength; i++) fn(arr[i]);
+    for (var i = 0; i < arrLength; i++) fn(arr[i], i);
   }
 }
 
