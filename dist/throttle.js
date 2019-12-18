@@ -1,0 +1,1 @@
+var throttle=function(){"use strict";return function(t,n,e,r,u){var l,a,i,o=null,c=0,f=function(){c=new Date,o=null,i=t.apply(l,a)};return function(){var p=new Date;c||e||(c=p);var s=n-(p-c);return l=u||this,a=arguments,s<=0?(clearTimeout(o),o=null,c=p,i=t.apply(l,a)):!o&&r&&(o=setTimeout(f,s)),i}}}();
