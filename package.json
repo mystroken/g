@@ -1,6 +1,6 @@
 {
   "name": "@mystroken/g",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "A garden of small JavaScript utilities.",
   "main": "index.js",
   "author": "Mystro Ken <mystroken@gmail.com>",
