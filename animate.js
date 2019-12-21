@@ -437,34 +437,37 @@ function setElementValue(element, animationType, propertyKey, value, unit) {
  * There are three types of animations
  * 'transform', 'opacity', 'object'
  *
+ * @param {*} element The animatable element.
  * @param {String} key The property key.
  * @returns {String}
  */
-function getAnimationType(key) {
-  switch (key) {
-    case 'x':
-    case 'y':
-    case 'translateX':
-    case 'translateY':
-    case 'translateZ':
-    case 'scale':
-    case 'scaleX':
-    case 'scaleY':
-    case 'scaleZ':
-    case 'skew':
-    case 'skewX':
-    case 'skewY':
-    case 'skewZ':
-    case 'rotate':
-    case 'rotateX':
-    case 'rotateY':
-    case 'rotateZ':
-      return 'transform';
-    case 'opacity':
-      return 'opacity';
-    default:
-      return 'object';
+function getAnimationType(element, key) {
+  if (isDOM(element)) {
+    switch (key) {
+      case 'x':
+      case 'y':
+      case 'translateX':
+      case 'translateY':
+      case 'translateZ':
+      case 'scale':
+      case 'scaleX':
+      case 'scaleY':
+      case 'scaleZ':
+      case 'skew':
+      case 'skewX':
+      case 'skewY':
+      case 'skewZ':
+      case 'rotate':
+      case 'rotateX':
+      case 'rotateY':
+      case 'rotateZ':
+        return 'transform';
+      case 'opacity':
+        return 'opacity';
+    }
   }
+
+  return 'object';
 }
 
 /**
@@ -542,6 +545,8 @@ function generateAnimations(elements, params) {
   // same properties for all selected elements, that
   // means that we can parse properties first
   // before looping through elements.
+  // TODO: Retrieve animation type first
+  // before parsing properties (in order to not translate properties of objects)
   var properties = parseProperties(params.p);
   var animations = [];
   var instanceDuration = 0;
@@ -561,7 +566,7 @@ function generateAnimations(elements, params) {
     forEachIn(Object.keys(properties))(function(key) {
       var property = { n: key, v: properties[key] };
       // Get the animation type.
-      var animationType = getAnimationType(key);
+      var animationType = getAnimationType(element, key);
       var parameters = extend(params, {
         el: element,
         type: animationType,
