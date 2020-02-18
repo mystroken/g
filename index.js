@@ -8,6 +8,7 @@ import forEachIn from "./forEachIn";
 import lerp from "./lerp";
 import Raf from "./Raf";
 import throttle from "./throttle";
+import Timeline from "./Timeline";
 
 export default {
   Animate: Animate,
@@ -20,4 +21,5 @@ export default {
   lerp: lerp,
   Raf: Raf,
   throttle: throttle,
+  Timeline: Timeline
 };
