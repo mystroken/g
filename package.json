@@ -1,12 +1,12 @@
 {
   "name": "@mystroken/g",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "A garden of small JavaScript utilities.",
   "main": "index.js",
   "author": "Mystro Ken <mystroken@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "jest --coverage",
+    "test": "npx mocha -r jsdom-global/register -r esm",
     "dev": "node scripts/dev/index.js",
     "build": "node scripts/prod/index.js"
   },
@@ -19,16 +19,26 @@
     "dist/**.js",
     "**.js"
   ],
-  "jest": {},
+  "jest": {
+    "verbose": true,
+    "transform": {
+      ".js": "jest-esm-transformer"
+    }
+  },
   "keywords": [
     "javascript",
     "libray",
     "creativecoding"
   ],
   "devDependencies": {
+    "chai": "^4.2.0",
     "eslint-config-airbnb-es5": "^1.2.0",
+    "esm": "^3.2.25",
     "globby": "^10.0.1",
-    "jest": "^24.9.0",
+    "jest-esm-transformer": "^1.0.0",
+    "jsdom": "^16.2.0",
+    "jsdom-global": "^3.0.2",
+    "mocha": "^7.0.1",
     "node-watch": "^0.6.3",
     "rollup": "^1.19.4",
     "rollup-plugin-commonjs": "^10.1.0",

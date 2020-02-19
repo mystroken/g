@@ -3,6 +3,8 @@ import Ease from './Ease';
 import forEachIn from './forEachIn';
 import lerp from './lerp';
 import round from './round';
+import clone from './clone';
+import extend from './extend';
 
 /**
  * @typedef InstanceParams
@@ -23,31 +25,6 @@ var defaultParams = {
   update: null,
   cb: null
 };
-
-// Object helpers
-
-/**
- * Clone an object.
- * @param {Object} o
- * @returns {Object}
- */
-function clone(o) {
-  var clone = {};
-  for (var p in o) clone[p] = o[p];
-  return clone;
-}
-
-/**
- * Extends an object.
- * @param {Object} o1
- * @param {Object} o2
- * @returns {Object}
- */
-function extend(o1, o2) {
-  var o = clone(o1);
-  for (var p in o2) o[p] = o2.hasOwnProperty(p) ? o2[p] : o1[p];
-  return o;
-}
 
 /**
  * Check if an element is contained inside a given array.
@@ -816,6 +793,9 @@ function animate(params) {
     }
   };
 
+  /**
+   * Reset animations.
+   */
   instance.reset = function() {
     instance.paused = true;
     instance.completed = false;
@@ -826,6 +806,9 @@ function animate(params) {
     for (var i=0; i<animationLength; i++) animations[i].reset();
   };
 
+  /**
+   * Start running the animations.
+   */
   instance.play = function() {
     if (!instance.paused) return;
     if (instance.completed) instance.reset();
@@ -843,6 +826,14 @@ function animate(params) {
   instance.pause = function() {
     instance.paused = true;
     freezeTime();
+  };
+
+  /**
+   * Stop animations.
+   */
+  instance.stop = function() {
+    instance.pause();
+    instance.reset();
   };
 
   instance.reset();

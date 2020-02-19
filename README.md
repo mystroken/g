@@ -73,7 +73,7 @@ tl
 tl.play();
 ```
 
-<br>
+[→ More about timeline](https://github.com/mystroken/g/blob/master/TIMELINE.md)
 
 ## Credits
 
