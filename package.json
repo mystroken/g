@@ -6,7 +6,7 @@
   "author": "Mystro Ken <mystroken@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "npx mocha -r jsdom-global/register -r esm",
+    "test": "npx jest",
     "dev": "node scripts/dev/index.js",
     "build": "node scripts/prod/index.js"
   },
@@ -31,14 +31,10 @@
     "creativecoding"
   ],
   "devDependencies": {
-    "chai": "^4.2.0",
     "eslint-config-airbnb-es5": "^1.2.0",
-    "esm": "^3.2.25",
     "globby": "^10.0.1",
+    "jest": "^25.1.0",
     "jest-esm-transformer": "^1.0.0",
-    "jsdom": "^16.2.0",
-    "jsdom-global": "^3.0.2",
-    "mocha": "^7.0.1",
     "node-watch": "^0.6.3",
     "rollup": "^1.19.4",
     "rollup-plugin-commonjs": "^10.1.0",

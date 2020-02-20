@@ -48,7 +48,7 @@ function Raf(loop) {
  */
 Raf.prototype.run = function() {
   this.E = false;
-  this.s = window.performance.now();
+  this.s = performance.now();
   this.r = requestAnimationFrame(this._t);
 };
 

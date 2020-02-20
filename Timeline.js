@@ -6,7 +6,6 @@
 import clamp from './clamp';
 import extend from './extend';
 import forEachIn from './forEachIn';
-import Raf from './Raf';
 
 /**
  * @typedef AnimationInstance
@@ -71,10 +70,12 @@ function pauseTimelineAnimations(queueElements, reset) {
  * @param {Number} time
  */
 function runTimelineAnimationsAtTime(queue, time) {
+  if (0 > time) return;
   forEachIn(queue)(function(element) {
     var animation = element.i;
     var startTime = element.s;
-    if (startTime >= time) animation.play();
+    var endTime = element.e;
+    if (startTime <= time && time < endTime) animation.play();
   });
 }
 
@@ -109,7 +110,7 @@ function computeAnimationStartTimeInTimeline(queue, offset) {
  * @param {TimelineTime} time
  * @returns {Number}
  */
-function getTimelineElapsedTime(time) {
+function getTimelineElapsedTime(time, delay) {
   // Get the last elapsed
   // time (store when we pause the instance for example)
   var lastElapsed = time.l;
@@ -117,7 +118,7 @@ function getTimelineElapsedTime(time) {
   var elapsed = performance.now() - time.s;
   // The new elapsed time is
   // the accumulation of all the previous elapsed time.
-  return Number(lastElapsed + elapsed);
+  return Math.floor(Number(lastElapsed + elapsed)) - Number(delay);
 }
 
 /**
@@ -173,12 +174,11 @@ function Timeline(params) {
   this._s = {};
 
   /**
-   * requestAnimationFrame Interface.
-   * @type {Raf}
+   * requestAnimationFrame ID.
+   * @type {Integer=}
    * @private
    */
-  this._tick = this._tick.bind(this);
-  this._r = new Raf(this._tick);
+  this._r = null;
 
   // Define the
   // duration property.
@@ -188,6 +188,7 @@ function Timeline(params) {
     }
   });
 
+  this._tick = this._tick.bind(this);
   this._resetState();
   this._resetTime();
  }
@@ -220,19 +221,19 @@ Timeline.prototype = {
   /**
    * Play the timeline.
    * @param {TimelineParameters=} params The timeline parameters.
-   * TODO: Consider the new passed delay when we hit play to resume a timeline.
    */
   play: function(params) {
-    if (!this._s.paused || this._s.completed) return;
-    // Process (only if paused and not completed)
+    if (!this._s.paused || this._s.running) return;
+    // Process (only if paused and not running)
     // Set (Override) timeline parameters.
     // Run the loop.
     // Set the timeline state to running.
 
     this._p = (typeof params === 'object') ? extend(this._p, params) : this._p;
-    this._r.run();
     this._s.running = true;
     this._s.paused = false;
+    this._s.completed = false;
+    this._r = requestAnimationFrame(this._tick);
   },
 
   /**
@@ -241,16 +242,14 @@ Timeline.prototype = {
   pause: function() {
     if (!this._s.running) return;
     // Process (only if running)
-    // Break the loop.
     // Pause all running animations.
     // Freeze the timeline time.
     // Set the timeline state to paused.
 
-    this._r.stop();
     pauseTimelineAnimations(this._q, false);
-    this._freezeTime();
     this._s.paused = true;
     this._s.running = false;
+    this._freezeTime();
   },
 
   /**
@@ -258,12 +257,10 @@ Timeline.prototype = {
    */
   stop: function() {
     // Process
-    // Break the loop.
     // Stop all animations (running or not).
     // Reset the timeline time.
     // Reset the state (paused, not completed and not running).
 
-    this._r.stop();
     pauseTimelineAnimations(this._q, true);
     this._resetTime();
     this._resetState();
@@ -275,35 +272,75 @@ Timeline.prototype = {
    */
   _tick: function() {
     // Process
+    // Check the timeline status
+    // If needed, break the loop. Else
+    // Run the timeline loop.
+
+    // Run the loop only
+    // when running, not paused and not completed.
+    if ( this._s.running
+      && !this._s.paused
+      && !this._s.completed ) this._runLoop();
+    else this._r = cancelAnimationFrame(this._tick);
+  },
+
+  /**
+   * Run the timeline loop.
+   * @private
+   */
+  _runLoop: function() {
+    // Process
     // Set the timeline time (progression).
     // Play ready animations.
     // Check the end of the timeline.
-
     this._setTime();
     runTimelineAnimationsAtTime(this._q, this._t.e);
-    if (this._p.update) this._p.update(this._t.p, this._t.e, this._t.t);
-    if (this._t.p >= 1) {
-      this._s.completed = true;
-      this._s.paused = true;
-      this._s.running = false;
-      if (this._p.cb) this._p.cb();
-      this._r.stop();
-    }
+    if (this._p.update && this._t.e > 0) this._p.update(this._t.p, this._t.e, this._t.t);
+    if (this._t.p >= 1) this._setTheEnd();
+
+    // Maintain the loop.
+    this._r = requestAnimationFrame(this._tick);
+  },
+
+  /**
+   * When the timeline reach the end,
+   * we have a lot of things to do.
+   * @private
+   */
+  _setTheEnd: function() {
+    // Process
+    // Set completed state
+    // Reset animations
+    // Reset time
+    // Call callback
+
+    this._s.completed = true;
+    this._s.paused = true;
+    this._s.running = false;
+    pauseTimelineAnimations(this._q, true);
+    this._resetTime();
+    this._p.cb && this._p.cb();
+  },
+
+  /**
+   * Set the current
+   * time on each loop call.
+   * @private
+   */
+  _setTime: function() {
+    this._t.s = (this._t.s === null) ? performance.now() : this._t.s;
+    this._t.e = getTimelineElapsedTime(this._t, this._p.delay);
+    this._t.p = Number(clamp(this._t.e, 0, this._t.t) / this._t.t);
   },
 
   /**
    * Reset the timeline state.
+   * @private
    */
   _resetState: function() {
     this._s.paused = true;
     this._s.completed = false;
     this._s.running = false;
-  },
-
-  _setTime: function() {
-    this._t.s = (this._t.s === null) ? performance.now() : this._t.s;
-    this._t.e = clamp(getTimelineElapsedTime(this._t), 0, this._t.t);
-    this._t.p = Number(this._t.e / this._t.t);
   },
 
   /**
