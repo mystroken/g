@@ -11,9 +11,9 @@ import Timeline from '@mystroken/g/Timeline';
 const params = {};
 const timeline = new Timeline(params);
 timeline
-.add(animate({ el: 'span', p: { y: [0, 100] }}))
-.add(animate({ el: 'span', p: { y: [100, 0] }}), 100)
-.add(animate({ el: 'span', p: { y: [0, 50] }}), -50);
+  .add(animate({ el: 'span', p: { y: [0, 100] }}))
+  .add(animate({ el: 'span', p: { y: [100, 0] }}))
+  .add(animate({ el: 'span', p: { y: [0, 50] }}), '-=50');
 
 // At anytime, run the animations timeline.
 timeline.play();
