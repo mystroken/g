@@ -65,9 +65,9 @@ anim.play();
 ```javascript
 const tl = new Timeline();
 tl
-    .add(animate({ el: 'span', p: { y: [0, 100] }}))
-    .add(animate({ el: 'span', p: { y: [100, 0] }}), 100)
-    .add(animate({ el: 'span', p: { y: [0, 50] }}), -50);
+  .add(animate({ el: 'span', p: { y: [0, 100] }}))
+  .add(animate({ el: 'span', p: { y: [100, 0] }}), 100)
+  .add(animate({ el: 'span', p: { y: [0, 50] }}), '=-50');
 
 // At anytime, run the animations timeline.
 tl.play();
