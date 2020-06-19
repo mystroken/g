@@ -184,7 +184,7 @@ function Timeline(params) {
   // duration property.
   Object.defineProperty(this, 'duration', {
     get: function() {
-      return Number(this._t.e - this._t.s);
+      return Number(this._t.t);
     }
   });
 
