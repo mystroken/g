@@ -2,6 +2,7 @@ import Animate from "./animate";
 import bindAll from "./bindAll";
 import clamp from "./clamp";
 import clone from './clone';
+import debounce from './debounce';
 import Delay from "./Delay";
 import Device from "./Device";
 import Ease from "./Ease";
@@ -17,6 +18,7 @@ export default {
   bindAll: bindAll,
   clamp: clamp,
   clone: clone,
+  debounce: debounce,
   Delay: Delay,
   Device: Device,
   Ease: Ease,
