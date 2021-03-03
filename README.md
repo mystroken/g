@@ -1,5 +1,9 @@
 # G
 
+![npm bundle size](https://img.shields.io/bundlephobia/minzip/@mystroken/g)
+![npm](https://img.shields.io/npm/dw/@mystroken/g)
+![npm](https://img.shields.io/npm/v/@mystroken/g)
+![GitHub last commit](https://img.shields.io/github/last-commit/mystroken/g)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mystroken/g/issues)
 
 > :hibiscus::leaves: G is a garden of small JavaScript utilities.
